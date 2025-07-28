@@ -42,6 +42,7 @@ export default function Onboarding() {
   const currentData = onboardingData[currentPage];
   const CurrentSlide = currentData.SlideComponent;
   const progress = (currentPage + 1) / totalPages;
+  
 
   return (
     <SafeAreaView style={styles.container}>
@@ -65,7 +66,11 @@ export default function Onboarding() {
           
           <View style={styles.bottomRow}>
             <Image source={currentData.memoji} style={styles.memoji} />
-            <CircularProgressButton onPress={handleNext} progress={progress} />
+             <CircularProgressButton 
+        onPress={handleNext} 
+        progress={progress} 
+        totalPages={totalPages} // Kirim totalPages sebagai prop
+      />
           </View>
         </View>
       </View>
@@ -78,10 +83,10 @@ const styles = StyleSheet.create({
   controlsContainer: { flex: 1, paddingHorizontal: 25, paddingBottom: 40, zIndex: 1 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 10, marginTop: 30 },
   logo: { width: 39, height: 39, resizeMode: 'contain' },
-  skipText: { fontSize: 16, color: '#333', fontWeight: '500' },
+  skipText: { fontSize: 16, color: '#938D8D', fontWeight: '500' },
   footer: {},
-  title: { fontSize: 42, fontWeight: 'bold', color: '#141414ff', marginBottom: 16, lineHeight: 50 },
-  subtitle: { fontSize: 16, color: '#555', lineHeight: 24 },
+  title: { fontSize: 62, fontWeight: 'bold', color: '#141414ff', marginBottom: 16, lineHeight: 50, marginTop:50  },
+  subtitle: { fontSize: 22, color: '#555', lineHeight: 24 },
   bottomRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 40 },
-  memoji: { width: 90, height: 60, resizeMode: 'contain' }, // saya tambahkan resizeMode
+  memoji: { width: 90, height: 90, resizeMode: 'contain' }, // saya tambahkan resizeMode
 });

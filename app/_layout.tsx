@@ -1,25 +1,28 @@
-// app/_layout.tsx
+// app/_layout.tsx (FINAL & PASTI MENAMPILKAN SPLASH KUSTOM)
 import { Stack } from 'expo-router';
 import * as ExpoSplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
-import { useFonts } from 'expo-font';
+import { useEffect, useState } from 'react';
+import SplashScreen from './splash';
 
 ExpoSplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [fontsLoaded, fontError] = useFonts({
-    // Jika Anda punya font kustom, letakkan di sini. Contoh:
-    // 'SpaceMono': require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
+  const [splashAnimationFinished, setSplashAnimationFinished] = useState(false);
 
+  // Sembunyikan native splash screen secepat mungkin
   useEffect(() => {
-    if (fontsLoaded || fontError) {
-      ExpoSplashScreen.hideAsync();
-    }
-  }, [fontsLoaded, fontError]);
+    ExpoSplashScreen.hideAsync();
+  }, []);
 
-  if (!fontsLoaded && !fontError) {
-    return null;
+  // Jika Anda ingin splash kustom punya "durasi"
+  useEffect(() => {
+    setTimeout(() => {
+      setSplashAnimationFinished(true);
+    }, 6000); // Tampilkan splash kustom selama 2 detik
+  }, []);
+
+  if (!splashAnimationFinished) {
+    return <SplashScreen />;
   }
 
   return (
@@ -27,7 +30,6 @@ export default function RootLayout() {
       <Stack.Screen name="onboarding" options={{ headerShown: false }} />
       <Stack.Screen name="welcome" options={{ headerShown: false }} /> 
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      {/* File splash.tsx tidak digunakan sebagai route, jadi tidak perlu ada di sini */}
     </Stack>
   );
 }
