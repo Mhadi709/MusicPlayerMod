@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather, AntDesign } from '@expo/vector-icons';
+import NextButton from '../../components/ui/NextButton';
 
 
 export default function LoginScreen() {
@@ -46,23 +47,20 @@ export default function LoginScreen() {
         ))}
 
         {/* Tombol akun lain */}
-        <TouchableOpacity style={styles.userItem}>
-        <View style={styles.addIcon}>
+         <TouchableOpacity style={styles.userItem} onPress={() => router.push('/(auth)/change-account')}>
+          <View style={styles.addIcon}>
             <AntDesign name="plus" size={20} color="#000" />
-        </View>
-        <Text style={styles.userName}>User other account</Text>
+          </View>
+          <Text style={styles.userName}>User other account</Text>
         </TouchableOpacity>
 
       </ScrollView>
 
       {/* Tombol NEXT */}
-  <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-  <View style={styles.innerButton}>
-    <Text style={styles.nextButtonText}>Next</Text>
-    <Feather name="arrow-right" size={20} color="#fff" style={styles.icon} />
-  </View>
-</TouchableOpacity>
-
+    <View style={{ flex: 1, justifyContent: 'center' }}>
+      {/* Komponen login lainnya */}
+      <NextButton onPress={handleNext} label="Login" />
+    </View>
 
     </View>
   );
@@ -133,37 +131,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 14,
   },
-nextButton: {
-  backgroundColor: '#2CA58D',
-  width: 370,
-  height: 60,
-  borderRadius: 35,
-  justifyContent: 'center',
-  alignItems: 'center',
-  marginBottom :20 ,
-},
-
-innerButton: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'center',
-  width: '100%',
-  paddingHorizontal: 30,
-  position: 'relative',
-},
-
-nextButtonText: {
-  color: '#fff',
-  fontSize: 18,
-  fontWeight: 'bold',
-  textAlign: 'center',
-  flex: 1, // agar tetap di tengah walaupun ada ikon
-},
-
-icon: {
-  position: 'absolute',
-  right: 30,
-},
-
 
 });

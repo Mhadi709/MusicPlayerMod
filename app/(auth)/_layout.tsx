@@ -12,6 +12,11 @@ export default function AuthLayout() {
           headerStyle: { backgroundColor: '#fff' }, // Opsional: memastikan warna header putih
         }} 
       />
+      <Stack.Screen name="change-account" options={{ 
+          title: '', // Judul kosong
+          headerShadowVisible: false, // Opsional: menghilangkan garis bayangan di bawah header
+          headerStyle: { backgroundColor: '#fff' }, // Opsional: memastikan warna header putih
+        }}  />
     </Stack>
   );
 }
