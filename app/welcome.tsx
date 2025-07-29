@@ -21,15 +21,15 @@ export default function WelcomeScreen() {
           <Text style={styles.titlePart2}>Caroline!</Text>
         </View>
         <Text style={styles.subtitle}>Are you ready for the journey full of smiles?</Text>
-       <TouchableOpacity
-  style={styles.button}
-  onPress={() => router.replace('/(tabs)')}
->
-  <View style={styles.buttonContent}>
-    <Text style={styles.buttonText}>Get Started</Text>
-    <Feather name="arrow-right" size={24} color="#FFFFFF" style={{ marginLeft: 10 }} />
-  </View>
-</TouchableOpacity>
+      <TouchableOpacity
+      style={styles.button}
+      onPress={() => router.push('/login')} 
+    >
+      <View style={styles.buttonContent}>
+        <Text style={styles.buttonText}>Get Started</Text>
+        <Feather name="arrow-right" size={24} color="#FFFFFF" style={{ marginLeft: 10 }} />
+      </View>
+    </TouchableOpacity>
 
       </View>
     </ImageBackground>
