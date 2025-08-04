@@ -59,7 +59,7 @@ export default function LoginScreen() {
       {/* Tombol NEXT */}
     <View style={{ flex: 1, justifyContent: 'center' }}>
       {/* Komponen login lainnya */}
-      <NextButton onPress={handleNext} label="Login" />
+      <NextButton title="Log in" onPress={() => console.log('Login pressed')} />
     </View>
 
     </View>

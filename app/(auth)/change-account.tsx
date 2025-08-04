@@ -10,14 +10,12 @@ export default function ChangeAccountScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Icon */}
+     
       <Image source={require('../../assets/images/Location.png')} style={styles.icon} />
 
-      {/* Title */}
       <Text style={styles.title}>Add Account</Text>
       <Text style={styles.subtitle}>Store the best of your journey with us{"\n"}and share it with your friends</Text>
 
-      {/* Google Login */}
       <TouchableOpacity
         style={[
           styles.accountItem,
@@ -32,7 +30,7 @@ export default function ChangeAccountScreen() {
         {selectedMethod === 'google' && <Feather name="check" size={20} color="#FDB813" />}
       </TouchableOpacity>
 
-      {/* Email Login */}
+      
       <TouchableOpacity
         style={[
           styles.accountItem,
@@ -43,14 +41,16 @@ export default function ChangeAccountScreen() {
         <View style={[styles.iconCircle, { backgroundColor: '#fff', borderColor: '#EAEAEA', borderWidth: 1 }]}>
           <Feather name="user" size={18} color="#FF4D4D" />
         </View>
+        <TouchableOpacity style={styles.accountName} onPress={()=> router.push('/(auth)/Register')}>
         <Text style={styles.accountName}>Start with Email</Text>
         {selectedMethod === 'email' && <Feather name="check" size={20} color="#FDB813" />}
+        </TouchableOpacity>
       </TouchableOpacity>
 
-      {/* Next Button */}
+      
        <View style={{ flex: 1, justifyContent: 'center' }}>
-      {/* Komponen login lainnya */}
-      <NextButton onPress={useRouter} label="Lanjut" />
+      
+        <NextButton title="Change Account" onPress={() => console.log('Change account pressed')} />
     </View>
     </View>
   );
