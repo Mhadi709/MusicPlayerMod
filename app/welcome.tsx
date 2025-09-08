@@ -23,7 +23,7 @@ export default function WelcomeScreen() {
         <Text style={styles.subtitle}>Are you ready for the journey full of smiles?</Text>
        <TouchableOpacity
   style={styles.button}
-  onPress={() => router.replace('/(tabs)')}
+  onPress={() => router.replace('/(tabs)/homepage')}
 >
   <View style={styles.buttonContent}>
     <Text style={styles.buttonText}>Get Started</Text>
