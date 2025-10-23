@@ -5,7 +5,7 @@ module.exports = function (api) {
     presets: ["babel-preset-expo"],
     plugins: [
       // Catatan penting: Plugin Reanimated harus selalu menjadi yang terakhir.
-      "react-native-reanimated/plugin",
+       'react-native-worklets/plugin',  
     ],
   };
 };

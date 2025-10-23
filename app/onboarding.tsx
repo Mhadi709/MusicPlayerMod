@@ -1,11 +1,11 @@
 // app/onboarding.tsx
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { View, StyleSheet, SafeAreaView, Text, Image, TouchableOpacity } from 'react-native';
+import { View, StyleSheet,  Text, Image, TouchableOpacity } from 'react-native';
 import { OnboardingScreen1 } from '../components/onboarding/OnboardingScreen1';
 import { OnboardingScreen2 } from '../components/onboarding/OnboardingScreen2';
 import CircularProgressButton from '../components/ui/CircularProgressButton';
-
+import { SafeAreaView } from "react-native-safe-area-context";
 const onboardingData = [
   {
     SlideComponent: OnboardingScreen1, 
@@ -35,9 +35,10 @@ export default function Onboarding() {
     }
   };
 
-  const handleSkip = () => {
-    router.replace('/(tabs)');
-  };
+ const handleSkip = () => {
+  router.replace("NowPlayingScreen" as any);
+};
+
 
   const currentData = onboardingData[currentPage];
   const CurrentSlide = currentData.SlideComponent;

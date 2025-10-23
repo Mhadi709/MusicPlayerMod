@@ -1,7 +1,7 @@
 // app/(tabs)/_layout.tsx
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { AntDesign } from '@expo/vector-icons';
+import { AntDesign, Feather } from '@expo/vector-icons';
 
 export default function TabLayout() {
   return (
@@ -17,7 +17,7 @@ export default function TabLayout() {
         name="explore"
         options={{
           title: 'Jelajahi',
-          tabBarIcon: ({ color, size }) => <AntDesign name="find" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <Feather name="search" size={24} color="black" />,
         }}
       />
     </Tabs>
