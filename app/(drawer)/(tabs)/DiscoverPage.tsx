@@ -1,5 +1,5 @@
 import { Feather, AntDesign } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import {
   FlatList,
   Keyboard,
 } from 'react-native';
-import { router, useRouter } from 'expo-router';
+import { router, useNavigation, useRouter } from 'expo-router';
 import { Route } from 'expo-router/build/Route';
 
 // Interface untuk setiap item dalam daftar gabungan
@@ -32,6 +32,13 @@ interface MusicReference {
 }
 
 const DiscoverPage = () => {
+   const router = useRouter();
+
+  useEffect(() => {
+    // Misalnya: kode khusus halaman ini
+  }, []);
+
+  
   useEffect(() => {
     StatusBar.setBarStyle('dark-content');
   }, []);
@@ -39,7 +46,7 @@ const DiscoverPage = () => {
   const handleSearchPress =() => {
     router.push('/(drawer)/(tabs)/ExplorePage');
   };
-   const router = useRouter();
+
 
    const allMusic: MusicReference[] = [
     { id: '1', title: 'Sardaar Ji', artist: 'Diljit Dosanjh', image: require('../../../assets/images/Justin Bieber.jpg') },
@@ -208,7 +215,8 @@ const DiscoverPage = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff'
+    backgroundColor: '#fff',
+    marginTop:9,
   },
   searchContainer: {
     flexDirection: 'row',

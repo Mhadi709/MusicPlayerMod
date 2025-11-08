@@ -16,8 +16,8 @@ import { Feather } from '@expo/vector-icons';
 import video1 from '../../../assets/videos/Video1.mp4';
 import video2 from '../../../assets/videos/Video2.mp4';
 import { VideoView, useVideoPlayer } from 'expo-video';
-import { useRouter } from 'expo-router';
-
+import { useNavigation, useRouter } from 'expo-router';
+import MiniNavbar from "../../../components/MiniNavbar";
 // Komponen terpisah untuk kartu video
 type VideoCardProps = {
   source: any;
@@ -41,13 +41,14 @@ const VideoCard: React.FC<VideoCardProps> = ({ source, title, meta, genre, custo
 
   return (
     <View style={[styles.videoCard, customStyle]}>
-      <VideoView
-        player={player}
-        style={styles.video}
-        nativeControls={false}
-        allowsFullscreen
-        contentFit="cover"
-      />
+    <VideoView
+  player={player}
+  style={styles.video}
+  nativeControls={false}
+  fullscreenOptions={{ enable: true }}
+  contentFit="cover"
+/>
+
       <View style={styles.overlay}>
         <Text style={styles.videoTitle}>{title}</Text>
         {genre && <Text style={styles.genreTag}>{genre}</Text>}
@@ -72,23 +73,25 @@ const ExploreCard: React.FC<{ title: string; image: any; color: string }> = ({ t
 
 export default function HomeScreen() {
   const userName = "Wilma";
+const router = useRouter();
 
-  const handleSearchPresss = () => {
-    router.push('/DiscoverPage'); 
+const handleSearchPresss = () => {
+  router.push("/(drawer)/(tabs)/DiscoverPage");
 };
-const router = useRouter(); 
+
 
   function handleSearchPress(event: GestureResponderEvent): void {
     throw new Error('Function not implemented.');
   }
 
   return (
+    <View style={{ flex: 1 }}>
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" />
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         {/* --- Header --- */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Recommended for you today.(emoji)</Text>
+          <Text style={styles.headerTitle}>Recommended for you today</Text>
         </View>
        <TouchableOpacity 
           style={styles.searchContainer} 
@@ -102,7 +105,7 @@ const router = useRouter();
 
         {/* --- Mulai Jelajahi Section --- */}
         <View style={styles.exploreSection}>
-          <Text style={styles.exploreTitle}>Mulai jelajahi</Text>
+          <Text style={styles.exploreTitle}>Start exploring</Text>
           <View style={styles.exploreGrid}>
             <ExploreCard
               title="Musik"
@@ -155,6 +158,8 @@ const router = useRouter();
         </View>
       </ScrollView>
     </SafeAreaView>
+    <MiniNavbar />
+</View>
   );
 }
 

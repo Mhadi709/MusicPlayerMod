@@ -92,7 +92,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </View>
 
       {/* SEARCH */}
-      <TouchableOpacity style={styles.searchContainer}>
+      <TouchableOpacity style={styles.searchContainer} onPress={() => navigation.navigate('ExplorePage')}>
         <Entypo name="magnifying-glass" size={20} style={styles.searchIcon} />
         <Text style={styles.placeholderText}>
           Search for songs, artists, playlists...

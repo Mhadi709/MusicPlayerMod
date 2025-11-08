@@ -14,7 +14,7 @@ import {
 import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import { Entypo, Feather, Fontisto, Octicons } from "@expo/vector-icons";
+import { Entypo, Feather, FontAwesome, Fontisto, MaterialIcons, Octicons } from "@expo/vector-icons";
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import * as ImagePicker from "expo-image-picker";
 
@@ -93,7 +93,7 @@ const pickImage = async () => {
        <View style={{ flexDirection: "row", alignItems: "center" }}>
       {/* Tombol Back */}
       <TouchableOpacity onPress={() => setShowConfirm(true)}>
-        <AntDesign name="arrowleft" size={24} color="black" />
+       <MaterialIcons name="arrow-back-ios-new" size={24} color="black" />
       </TouchableOpacity>
 
       {/* Modal Konfirmasi */}
@@ -231,12 +231,7 @@ const pickImage = async () => {
           onPress={() => console.log("Pilih kode negara")}
         >
           <Text style={{ fontSize: 16, color: "black" }}>+62</Text>
-          <AntDesign
-            name="caretdown"
-            size={14}
-            color="black"
-            style={{ marginLeft: 4 }}
-          />
+          <FontAwesome name="caret-down" size={24} color="black" style={{ marginLeft: 4 }}/>
         </TouchableOpacity>
 
         {/* Garis Pemisah */}

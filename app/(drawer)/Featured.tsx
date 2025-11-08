@@ -72,13 +72,14 @@ const VideoCard: React.FC<VideoCardProps> = ({ source, title, meta, genre, custo
   return (
     <View style={styles.videoCard}>
       <View style={styles.videoContainer}>
-        <VideoView
-          player={player}
-          style={styles.video}
-          nativeControls={false}
-          allowsFullscreen
-          contentFit="cover"
-        />
+      <VideoView
+  player={player}
+  style={styles.video}
+  nativeControls={false}
+  fullscreenOptions={{ enable: true }}
+  contentFit="cover"
+/>
+
       </View>
 
       {/* Overlay */}

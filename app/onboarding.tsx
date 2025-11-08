@@ -36,7 +36,7 @@ export default function Onboarding() {
   };
 
   const handleSkip = () => {
-    router.replace('/(tabs)/homepage');
+    router.replace('/homepage');
   };
 
   const currentData = onboardingData[currentPage];

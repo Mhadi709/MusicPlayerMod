@@ -8,6 +8,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import type { DrawerContentComponentProps } from '@react-navigation/drawer';
 import MenuButton from "../../components/MenuButton";
 import { useState } from "react";
+import MiniNavbar from "@/components/MiniNavbar";
 type DrawerItemProps = {
   icon: React.ReactNode;
   label: string;  
@@ -158,29 +159,9 @@ export default function DrawerLayout() {
     name="(tabs)"
     options={{ drawerLabel: "Home", title: "" }}
   />
-  {/* <Drawer.Screen name="Featured" options={{ drawerLabel: "Featured" }} />
-
-  <Drawer.Screen
-    name="albumplaylist"
-    options={{ drawerLabel: "Pesan" }}
-  />
-  <Drawer.Screen
-    name="Notifications"
-    options={{ drawerLabel: "Notifikasi" }}
-  />
-  <Drawer.Screen
-    name="Bookmarks"
-    options={{ drawerLabel: "Tersimpan" }}
-  />
-  <Drawer.Screen
-    name="profil"
-    options={{ drawerLabel: "profil" }}
-  />
-  <Drawer.Screen
-    name="settingsandprivacy"
-    options={{ drawerLabel: "settings and privacy" }}
-  /> */}
+  
 </Drawer>
+
 </GestureHandlerRootView>
     
   );

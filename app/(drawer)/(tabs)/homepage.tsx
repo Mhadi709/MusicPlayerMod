@@ -7,6 +7,8 @@ import video1 from '../../../assets/videos/Video1.mp4';
 import Layout from "../../../components/hederLayout"; // Sesuaikan path jika berbeda
 import { LinearGradient } from "expo-linear-gradient";
 import MaskedView from "@react-native-masked-view/masked-view";
+import MiniNavbar from "../../../components/MiniNavbar";
+
 type VideoCardProps = {
   source: any;
   title: string;
@@ -30,13 +32,13 @@ const VideoCard: React.FC<VideoCardProps> = ({ source, title, meta, genre, custo
     <View>
       <View style={[styles.videoCard, customStyle]}>
         <View style={styles.videoContainer}>
-          <VideoView
-            player={player}
-            style={styles.video}
-            nativeControls={false}
-            allowsFullscreen
-            contentFit="cover"
-          />
+        <VideoView
+          player={player}
+          style={styles.video}
+          nativeControls={false}
+          fullscreenOptions={{ enable: true }}
+          contentFit="cover"
+        />
         </View>
         <View style={styles.overlay}>
           <View style={styles.topOverlay}>
@@ -55,25 +57,24 @@ const VideoCard: React.FC<VideoCardProps> = ({ source, title, meta, genre, custo
       <View style={styles.extraCard}>
         <View style={styles.textIconContainer}>
      <View style={{ flexDirection: "row" }}>
- <MaskedView
-  maskElement={
-    <Text style={[styles.extraTitle, { backgroundColor: "transparent" }]}>
-      Top Hits by Diljit
-    </Text>
-  }
->
-  <LinearGradient
-    colors={["#0B3129", "#219780"]}
-    start={{ x: 0, y: 0 }}
-    end={{ x: 1, y: 0 }}
-  >
-    <Text style={[styles.extraTitle, { opacity: 0 }]}>
-      Top Hits by Diljit
-    </Text>
-  </LinearGradient>
-</MaskedView>
-
-</View>
+        <MaskedView
+          maskElement={
+            <Text style={[styles.extraTitle, { backgroundColor: "transparent" }]}>
+              Top Hits by Diljit
+            </Text>
+          }
+        >
+      <LinearGradient
+        colors={["#0B3129", "#219780"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+      >
+        <Text style={[styles.extraTitle, { opacity: 0 }]}>
+          Top Hits by Diljit
+        </Text>
+      </LinearGradient>
+      </MaskedView>
+      </View>
 
           <View style={styles.iconContainer}>
             <TouchableOpacity>
@@ -91,8 +92,8 @@ const VideoCard: React.FC<VideoCardProps> = ({ source, title, meta, genre, custo
 };
 
 export default function ExploreScreen() {
-
   return (
+<View style={{ flex: 1 }}>
     <ScrollView style={styles.main} showsVerticalScrollIndicator={false}>
       {/* HEADER */}
       <Layout children={undefined} />
@@ -285,9 +286,13 @@ export default function ExploreScreen() {
         </Text>
       </View>
     </View>
+    
   </ScrollView>
 </View>
     </ScrollView>
+      {/* <MiniPlayer /> */}
+     <MiniNavbar />
+    </View>
   );
 }
 
@@ -296,6 +301,7 @@ const styles = StyleSheet.create({
   main: {
     flex: 1,
     backgroundColor: '#F5F5F5',
+     paddingTop: 40,
   },
   content: {
     flex: 1,

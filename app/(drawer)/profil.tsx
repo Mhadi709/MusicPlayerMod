@@ -14,7 +14,7 @@ import {
 import { MaterialIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-
+import MiniNavbar from "../../components/MiniNavbar";
 
 type Song = {
   id: string;
@@ -162,66 +162,70 @@ const combinedData: CombinedItem[] = [
 
 
 const Profil: React.FC = () => {
-  return (
-      <View style={styles.container}>
-        {/* Background SVG */}
-         <StatusBar backgroundColor="#000000" barStyle="light-content"  />
+   return (
+    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+      <StatusBar backgroundColor="#000000" barStyle="light-content" />
 
-        <View style={StyleSheet.absoluteFill}>
-          <Rectangle428 width={523} height={423} />
-        </View>
+      {/* Background SVG */}
+      <View style={StyleSheet.absoluteFill}>
+        <Rectangle428 width={523} height={423} />
+      </View>
 
-        {/* Konten Profil */}
-        <View style={{ paddingTop: StatusBar.currentHeight }}>
+      {/* Profil Header */}
+      <View style={{ paddingTop: StatusBar.currentHeight || 50 }}>
         <View style={styles.profileRow}>
           <Image
             source={{ uri: "https://i.pravatar.cc/300" }}
             style={styles.avatar}
           />
           <View>
-            <Text style={styles.name}>akbar azidikin</Text>
+            <Text style={styles.name}>Akbar Azidikin</Text>
             <Text style={styles.subText}>15 Playlists • 250 Songs Saved</Text>
           </View>
         </View>
       </View>
-        {/* Action */}
-        <View style={styles.actionContainer}>
-<TouchableOpacity
-      style={styles.editButton}
-      onPress={() => router.push("/(drawer)/(tabs)/settings")}
-    >
-      <Text style={styles.editText}>Edit</Text>
-    </TouchableOpacity>
-          <TouchableOpacity style={styles.moreButton}>
-            <MaterialIcons name="more-vert" size={24} color="#000" />
-          </TouchableOpacity>
-        </View>
 
-        {/* Scrollable Section */}
-        <FlatList
-          data={combinedData}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{
-            paddingBottom: 80, // tambah space biar tombol gak ketutup
-            paddingHorizontal: 13,
-            marginTop: 16,
-          }}
-          renderItem={({ item }) => {
-            if (item.type === "song") {
-              return <SongCard item={item} />;
-            } else {
-              return <RecommendedPodcastCard item={item} />;
-            }
-          }}
-          ListFooterComponent={
-            <TouchableOpacity style={styles.playlistButton}>
-              <Text style={styles.endofsentence}>Lihat semua playlist</Text>
-            </TouchableOpacity>
-          }
-        />
+      {/* Tombol Edit dan More */}
+      <View style={styles.actionContainer}>
+        <TouchableOpacity
+          style={styles.editButton}
+          onPress={() => router.push("/(drawer)/(tabs)/settings")}
+        >
+          <Text style={styles.editText}>Edit</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.moreButton}>
+          <MaterialIcons name="more-vert" size={24} color="#000" />
+        </TouchableOpacity>
       </View>
-    // </SafeAreaView>
+
+      {/* Daftar Lagu / Podcast */}
+      <FlatList
+        data={combinedData}
+        keyExtractor={(item) => item.id}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingBottom: 110, // ruang agar tidak ketutupan navbar
+          paddingHorizontal: 13,
+          marginTop: 16,
+        }}
+        renderItem={({ item }) =>
+          item.type === "song" ? (
+            <SongCard item={item} />
+          ) : (
+            <RecommendedPodcastCard item={item} />
+          )
+        }
+        ListFooterComponent={
+          <TouchableOpacity style={styles.playlistButton}>
+            <Text style={styles.endofsentence}>Lihat semua playlist</Text>
+          </TouchableOpacity>
+        }
+      />
+
+      {/* Mini Navbar */}
+      <MiniNavbar />
+    </View>
   );
 };
 
