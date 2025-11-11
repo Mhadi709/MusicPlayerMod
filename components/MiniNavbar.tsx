@@ -8,7 +8,7 @@ const MiniNavbar = () => {
   const router = useRouter();
   const pathname = usePathname();
 
-  const homeRelatedPaths = ["/homepage", "/songs", "/podcasts", "/playlist"];
+  const homeRelatedPaths = ["/homepage", "/songs", "/podcasts", "/playlist","/MusicDetailScreen"];
   const hideNavbarRoutes = ["/DiscoverPage"];
   const shouldHideNavbar = hideNavbarRoutes.includes(pathname);
   const isHomeActive = homeRelatedPaths.includes(pathname);

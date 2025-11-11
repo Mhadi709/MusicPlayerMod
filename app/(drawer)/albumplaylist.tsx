@@ -2,6 +2,7 @@ import * as React from 'react';
 import { View, Text, StyleSheet, FlatList, Image } from 'react-native';
 import MenuButton from "@/components/MenuButton";
 import { Feather } from '@expo/vector-icons';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 type Song = {
   id: string;
@@ -33,6 +34,8 @@ function AlbumPlaylistPage() {
     />
   );
   return (
+     <SafeAreaProvider>
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
      <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
@@ -54,6 +57,8 @@ function AlbumPlaylistPage() {
         showsVerticalScrollIndicator={false} // kalau mau hide scrollbar
       />
     </View>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 

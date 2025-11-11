@@ -2,6 +2,7 @@ import { StyleSheet, Text, View, TouchableOpacity, ScrollView } from "react-nati
 import React from "react";
 import MenuButton from "@/components/MenuButton";
 import { Feather, Ionicons, AntDesign, SimpleLineIcons } from "@expo/vector-icons";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 export default function SettingsandPrivacy() {
   const menuItems = [
@@ -12,8 +13,10 @@ export default function SettingsandPrivacy() {
     { id: 5, title: "General", icon: <Feather name="info" size={24} color="#6C7072" /> },
     { id: 6, title: "Accessibility", icon: <Ionicons name="accessibility-outline" size={24} color="#6C7072" /> },
   ];
-
+ 
   return (
+     <SafeAreaProvider>
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#fff",  paddingTop:1  }}>
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
@@ -37,6 +40,8 @@ export default function SettingsandPrivacy() {
         ))}
       </ScrollView>
     </View>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 

@@ -4,6 +4,7 @@ import { Feather, MaterialIcons, AntDesign } from "@expo/vector-icons";
 import MenuButton from "@/components/MenuButton";
 import NotificationIcon from "../../assets/images/no_notification_icon.svg";
 import MusicIcon from "../../assets/images/Music_Icon.svg";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 export default function Notifications() {
   // Dummy notifikasi (bisa ambil dari API nantinya)
@@ -47,6 +48,8 @@ export default function Notifications() {
   };
 
   return (
+     <SafeAreaProvider>
+          <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
@@ -91,6 +94,8 @@ export default function Notifications() {
         </ScrollView>
       )}
     </View>
+      </SafeAreaView>
+        </SafeAreaProvider>
   );
 }
 

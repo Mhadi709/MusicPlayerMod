@@ -17,6 +17,7 @@ import MenuButton from "@/components/MenuButton";
 import { LinearGradient } from "expo-linear-gradient";
 import NodataBookmar from "@/components/NodataBookmar";
 import SortMenu from "@/components/SortMenu";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 // --- Types ---
 export interface Song {
@@ -272,6 +273,8 @@ const handleSortChange = (option: string) => {
     activeTab === "music" ? bookmarks.music : bookmarks.podcast;
 
   return (
+     <SafeAreaProvider>
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
@@ -367,6 +370,8 @@ const handleSortChange = (option: string) => {
 </Modal>
 
     </View>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 

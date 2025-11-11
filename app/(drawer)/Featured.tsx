@@ -11,7 +11,7 @@ import {
 import { AntDesign, Feather, FontAwesome, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
 import { Foundation } from "@expo/vector-icons";
 import MenuButton from "@/components/MenuButton";
-
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 // contoh asset video (pakai hook video player kamu)
 import video1 from "../../assets/videos/Video1.mp4";
 import profilePic from "../../assets/images/Prifile.jpg";
@@ -19,18 +19,24 @@ import ArrowReload from "../../assets/images/arrow-reload 3.svg";
 import { useVideoPlayer, VideoView } from "expo-video";
 
 type VideoCardProps = {
-  source: any;        // bisa diganti jadi `string | number` atau tipe player kamu
+  source: any;
   title: string;
   meta: string;
   genre?: string;
   customStyle?: any;
 };
 
-const VideoCard: React.FC<VideoCardProps> = ({ source, title, meta, genre, customStyle }) => {
-  // pakai player hook kamu
+const VideoCard: React.FC<VideoCardProps> = ({
+  source,
+  title,
+  meta,
+  genre,
+  customStyle,
+}) => {
   const player = useVideoPlayer(source);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+
   useEffect(() => {
     if (player) {
       player.loop = true;
@@ -39,23 +45,21 @@ const VideoCard: React.FC<VideoCardProps> = ({ source, title, meta, genre, custo
     }
   }, [player]);
 
-  
-   const anim1 = useRef(new Animated.Value(0)).current;
+  const anim1 = useRef(new Animated.Value(0)).current;
   const anim2 = useRef(new Animated.Value(0)).current;
   const anim3 = useRef(new Animated.Value(0)).current;
 
-  // fungsi bikin animasi naik-turun
   const animateBar = (anim: Animated.Value, delay: number) => {
     Animated.loop(
       Animated.sequence([
         Animated.timing(anim, {
-          toValue: 20, // tinggi naik
+          toValue: 20,
           duration: 300,
           delay,
           useNativeDriver: false,
         }),
         Animated.timing(anim, {
-          toValue: 5, // balik turun
+          toValue: 5,
           duration: 300,
           useNativeDriver: false,
         }),
@@ -72,19 +76,18 @@ const VideoCard: React.FC<VideoCardProps> = ({ source, title, meta, genre, custo
   return (
     <View style={styles.videoCard}>
       <View style={styles.videoContainer}>
-      <VideoView
-  player={player}
-  style={styles.video}
-  nativeControls={false}
-  fullscreenOptions={{ enable: true }}
-  contentFit="cover"
-/>
-
+        <VideoView
+          player={player}
+          style={styles.video}
+          nativeControls={false}
+          fullscreenOptions={{ enable: true }}
+          contentFit="cover"
+        />
       </View>
 
       {/* Overlay */}
       <View style={styles.overlay}>
-        {/* Atas: profile + teks + play button */}
+        {/* Atas */}
         <View style={styles.topOverlay}>
           <View style={{ flexDirection: "row", alignItems: "center" }}>
             <Image source={profilePic} style={styles.profileImage} />
@@ -95,87 +98,83 @@ const VideoCard: React.FC<VideoCardProps> = ({ source, title, meta, genre, custo
           </View>
 
           <TouchableOpacity
-        style={styles.playButton}
-        onPress={() => setIsPlaying(!isPlaying)}
-      >
-        {isPlaying ? (
-          <AntDesign name="pause" size={28} color="#1C274C" />
-        ) : (
-          <FontAwesome6 name="play" size={28} color="#1C274C" />
-        )}
-      </TouchableOpacity>
-    </View>
+            style={styles.playButton}
+            onPress={() => setIsPlaying(!isPlaying)}
+          >
+            {isPlaying ? (
+              <AntDesign name="pause" size={28} color="#1C274C" />
+            ) : (
+              <FontAwesome6 name="play" size={28} color="#1C274C" />
+            )}
+          </TouchableOpacity>
+        </View>
 
+        {/* Tengah */}
+        <View style={styles.centerInfo}>
+          <Text style={styles.videoTitle}>{title}</Text>
+          <Text style={styles.videoMeta}>{meta}</Text>
+        </View>
 
-        {/* Tengah: judul playlist */}
-     <View style={styles.centerInfo}>
-  <Text style={styles.videoTitle}>{title}</Text>
-  <Text style={styles.videoMeta}>{meta}</Text>
-</View>
-
-
-        {/* Bawah: ikon kontrol */}
+        {/* Bawah */}
         <View style={styles.bottomOverlay}>
           <TouchableOpacity>
             <ArrowReload width={26} height={26} fill="#fff" />
           </TouchableOpacity>
-       
-        <FontAwesome name="random" size={24} color="#fff" style={styles.icon} />
-         <View style={styles.container1}>
-      
-      <View style={styles.bars}>
-        <Animated.View
-          style={[styles.bar, { height: anim1 }]}
-        />
-        <Animated.View
-          style={[styles.bar, { height: anim2 }]}
-        />
-        <Animated.View
-          style={[styles.bar, { height: anim3 }]}
-        />
-      </View>
-    </View>
 
-         <TouchableOpacity onPress={() => setIsMuted(!isMuted)}>
-        {isMuted ? (
-          <Foundation name="volume-strike" size={30} color="#fff" />
-        ) : (
-          <Feather name="volume-2" size={30} color="#fff" />
-        )}
-      </TouchableOpacity>
+          <FontAwesome name="random" size={24} color="#fff" style={styles.icon} />
+
+          <View style={styles.container1}>
+            <View style={styles.bars}>
+              <Animated.View style={[styles.bar, { height: anim1 }]} />
+              <Animated.View style={[styles.bar, { height: anim2 }]} />
+              <Animated.View style={[styles.bar, { height: anim3 }]} />
+            </View>
+          </View>
+
+          <TouchableOpacity onPress={() => setIsMuted(!isMuted)}>
+            {isMuted ? (
+              <Foundation name="volume-strike" size={30} color="#fff" />
+            ) : (
+              <Feather name="volume-2" size={30} color="#fff" />
+            )}
+          </TouchableOpacity>
         </View>
       </View>
     </View>
   );
 };
 
+// ✅ Bungkus Featured dengan SafeAreaProvider
 function Featured() {
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <MenuButton />
-        <Text style={styles.title}>Featured</Text>
-        <TouchableOpacity>
-          <Feather name="search" size={24} color="#1d1e1f" />
-        </TouchableOpacity>
-      </View>
+    <SafeAreaProvider>
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+        <View style={styles.container}>
+          {/* Header */}
+          <View style={styles.header}>
+            <MenuButton />
+            <Text style={styles.title}>Featured</Text>
+            <TouchableOpacity>
+              <Feather name="search" size={24} color="#1d1e1f" />
+            </TouchableOpacity>
+          </View>
 
-      {/* Body scroll */}
-      <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
-        <VideoCard
-          source={video1}
-          title="80s Smash Hits"
-          meta="1989 • 13 songs"
-        />
-        <VideoCard
-          source={video1}
-          title="Cinematic Ambient"
-          meta="2012 • 13 songs"
-        />
-        {/* bisa tambah VideoCard lain */}
-      </ScrollView>
-    </View>
+          {/* Body scroll */}
+          <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
+            <VideoCard
+              source={video1}
+              title="80s Smash Hits"
+              meta="1989 • 13 songs"
+            />
+            <VideoCard
+              source={video1}
+              title="Cinematic Ambient"
+              meta="2012 • 13 songs"
+            />
+          </ScrollView>
+        </View>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 

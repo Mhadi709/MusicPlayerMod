@@ -3,12 +3,7 @@ module.exports = function (api) {
   return {
     presets: ['babel-preset-expo'],
     plugins: [
-      // hanya gunakan satu plugin Reanimated!
-      // jangan tambahkan react-native-worklets secara manual
-      'react-native-reanimated/plugin',
-
-      // jika kamu menggunakan expo-router
-      require.resolve('expo-router/babel'),
+      "react-native-reanimated/plugin",
     ],
   };
 };

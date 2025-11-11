@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
     paddingVertical: 15, 
   },
   headerTitle: { fontSize: 36, fontWeight: 'bold' },
-  section: { marginTop: 20, paddingBottom: 15 }, 
+  section: { marginTop: 19, paddingBottom: 16 }, 
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',

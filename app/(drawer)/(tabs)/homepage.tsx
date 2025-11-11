@@ -8,6 +8,8 @@ import Layout from "../../../components/hederLayout"; // Sesuaikan path jika ber
 import { LinearGradient } from "expo-linear-gradient";
 import MaskedView from "@react-native-masked-view/masked-view";
 import MiniNavbar from "../../../components/MiniNavbar";
+import { router } from "expo-router";
+
 
 type VideoCardProps = {
   source: any;
@@ -16,7 +18,12 @@ type VideoCardProps = {
   genre?: string;
   customStyle?: any;
 };
-
+  const handlePress = () => {
+    router.push("/NowPlayingScreen"); // arahkan ke halaman NowPlayingScreen.tsx
+  };
+  const handlePresss = () => {
+    router.push("/MusicDetailScreen"); 
+  };
 const VideoCard: React.FC<VideoCardProps> = ({ source, title, meta, genre, customStyle }) => {
   const player = useVideoPlayer(source);
 
@@ -27,8 +34,9 @@ const VideoCard: React.FC<VideoCardProps> = ({ source, title, meta, genre, custo
       player.play();
     }
   }, [player]);
-
+const [shareVisible, setShareVisible] = useState(false);
   return (
+    
     <View>
       <View style={[styles.videoCard, customStyle]}>
         <View style={styles.videoContainer}>
@@ -80,7 +88,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ source, title, meta, genre, custo
             <TouchableOpacity>
               <Feather name="heart" size={20} color="#1C274C" />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.shareIcon}>
+            <TouchableOpacity style={styles.shareIcon} >
               <Feather name="share" size={20} color="#" />
             </TouchableOpacity>
           </View>
@@ -116,8 +124,15 @@ export default function ExploreScreen() {
   </View>
   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollView}>
     <View style={styles.cardHistory}>
-      <Image style={styles.card} source={require('../../../assets/images/download.jpg')} />
+        <TouchableOpacity onPress={handlePress}>
+        <Image
+          style={styles.card}
+          source={require("../../../assets/images/download.jpg")}
+        />
+      </TouchableOpacity>
+              <TouchableOpacity onPress={handlePresss}>
       <Image style={styles.card} source={require('../../../assets/images/gambar1.png')} />
+      </TouchableOpacity>
       <Image style={styles.card} source={require('../../../assets/images/gambar 2.png')} />
       <Image style={styles.card} source={require('../../../assets/images/gambar 3.png')} />
     </View>
@@ -126,9 +141,9 @@ export default function ExploreScreen() {
   {/* Trending Section */}
   <View style={styles.trendingSectionTitle}>
     <Text style={styles.sectionTitlePart1}>Trending Now</Text>
-    <TouchableOpacity>
-      <Text style={styles.seeAllText}>See all</Text>
-    </TouchableOpacity>
+    <TouchableOpacity onPress={() => router.push("/(drawer)/Featured")}>
+  <Text style={styles.seeAllText}>See all</Text>
+</TouchableOpacity>
   </View>
 
   {/* Video Card */}
@@ -186,7 +201,7 @@ export default function ExploreScreen() {
     </View>
    <View style={styles.container}>
   {/* Card artis */}
-  <TouchableOpacity style={styles.card1}>
+   <TouchableOpacity style={styles.card1} onPress={() => router.push("/ArtistProfile")}>
     <Image
       source={require("../../../assets/images/Justin Bieber.jpg")}
       style={styles.image}
@@ -238,7 +253,7 @@ export default function ExploreScreen() {
 </View>
    <View style={styles.container}>
   {/* Card artis */}
-  <TouchableOpacity style={styles.card1}>
+  <TouchableOpacity style={styles.card1} onPress={() => router.push("/ArtistProfile")}>
     <Image
       source={require("../../../assets/images/Afgan.webp")}
       style={styles.image}
