@@ -31,6 +31,16 @@ export default function WelcomeScreen() {
     <Feather name="arrow-right" size={24} color="#FFFFFF" style={{ marginLeft: 10 }} />
   </View>
 </TouchableOpacity>
+      <TouchableOpacity
+      style={styles.button}
+      onPress={() => router.push("/login" as any)}
+
+    >
+      <View style={styles.buttonContent}>
+        <Text style={styles.buttonText}>Get Started</Text>
+        <Feather name="arrow-right" size={24} color="#FFFFFF" style={{ marginLeft: 10 }} />
+      </View>
+    </TouchableOpacity>
 
       </View>
     </ImageBackground>

@@ -1,4 +1,4 @@
-// components/ui/CircularProgressButton.tsx (DENGAN SEGMENT DINAMIS)
+// components/ui/CircularProgressButton.tsx 
 import React, { useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';

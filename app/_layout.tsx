@@ -111,9 +111,8 @@ export default function RootLayout() {
         <Stack.Screen name="ArtistProfile" options={{ headerShown: false }} />
         <Stack.Screen name="viewalbum" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="MusicDetailScreen" options={{ headerShown: false }}
-/>
-
+        <Stack.Screen name="MusicDetailScreen" options={{ headerShown: false }}/>
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       </Stack>
 
       {/* ✅ Letakkan Toast di paling bawah */}
