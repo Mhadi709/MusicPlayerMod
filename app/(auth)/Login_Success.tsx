@@ -1,4 +1,3 @@
-// app/(auth)/login-success.tsx (FULL SCREEN)
 import React, { useState } from 'react';
 import {
   View,
@@ -8,13 +7,13 @@ import {
   StatusBar,
   Image,
   Dimensions,
-  ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import NextButton from '../../components/ui/NextButton';
+import NextButton from '../../components/onboarding/NextButton';
+import LoadingIndicator from '../../components/common/LoadingIndicator';
 
 const { width, height } = Dimensions.get('window');
-
 
 export default function LoginSuccessScreen() {
   const router = useRouter();
@@ -22,131 +21,117 @@ export default function LoginSuccessScreen() {
 
   const handleContinue = async () => {
     try {
-      setIsLoading(true); // mulai loading
-      // Bisa tambahkan delay kecil biar terlihat smooth
+      setIsLoading(true);
       setTimeout(() => {
-        router.replace('/(drawer)/(tabs)/homepage');
+        router.replace('/(drawer)/choose-artists');
       }, 800);
     } catch (error) {
       console.error(error);
       setIsLoading(false);
     }
   };
+
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" />
-      <View style={styles.container}>
-        {/* Background Oval */}
-        <View style={styles.oval} />
-
-        {/* Gambar Tas */}
-        <Image
-          source={require('../../assets/images/bag.png')}
-          style={styles.bagIcon}
-        />
-
-        {/* Konten Teks */}
-        <View style={styles.content}>
-          <Text style={styles.title}>
-            Logged in{'\n'}successfully
-          </Text>
-          <Text style={styles.subtitle}>
-            We have prepared information for your journey
-          </Text>
-        </View>
-
-        {/* Tombol Continue */}
-        <View style={styles.buttonContainer}>
- <NextButton
-  title={isLoading ? '' : 'Continue'}
-  onPress={handleContinue}
-  style={{
-  ...styles.continueButton,
-  ...(isLoading ? styles.loadingButton : {}),
-}}
-
-  disabled={isLoading}
-/>
-
-          {isLoading && (
-            <ActivityIndicator
-              size="small"
-              color="#2CA58D" // kuning
-              style={styles.loadingIndicator}
+    <View style={styles.mainContainer}>
+      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+      <View style={styles.yellowBackground} />
+      <SafeAreaView style={styles.safeArea}>
+        
+        <View style={styles.contentContainer}>
+          <View style={styles.topSection}>
+            <Image
+              source={require('../../assets/images/bag.png')}
+              style={styles.bagIcon}
             />
-          )}
+
+            <View style={styles.textWrapper}>
+              <Text style={styles.title}>
+                Logged in{'\n'}successfully
+              </Text>
+              <Text style={styles.subtitle}>
+                We have prepared information for your journey
+              </Text>
+            </View>
+          </View>
+          <View style={styles.bottomSection}>
+            {isLoading ? (
+              <LoadingIndicator size="large" />
+            ) : (
+              <NextButton
+                title="Start new journey"
+                onPress={handleContinue}
+              />
+            )}
+          </View>
         </View>
-      </View>
-    </SafeAreaView>
+
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  mainContainer: {
+    flex: 1,
+    backgroundColor: '#FFFFFF', 
+  },
+  yellowBackground: {
+    position: 'absolute',
+    backgroundColor: '#FFC107', 
+    width: height * 1.2,      
+    height: height * 1.2,
+    borderRadius: (height * 1.2) / 2, 
+    top: -height * 0.45,       
+    left: -height * 0.35,       
+   
+  },
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
-  container: {
+  contentContainer: {
     flex: 1,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    position: 'relative',
-    overflow: 'hidden',
+    justifyContent: 'space-between', 
+    paddingHorizontal: 30, 
+    paddingBottom: 40,    
+    paddingTop: Platform.OS === 'android' ? 50 : 20, 
   },
-  oval: {
-    position: 'absolute',
-    backgroundColor: 'rgba(255, 193, 7, 1)',
-    width: width * 1.7, // sedikit lebih besar
-    height: height * 0.75, // diperbesar sedikit
-    top: -height * 0.09, // diturunkan sedikit
-    left: -width * 0.35,
-    transform: [{ rotate: '-15deg' }],
-    borderRadius: (width * 1.7) / 2,
+  topSection: {
+    flex: 1,
+    justifyContent: 'center', 
+    alignItems: 'flex-start', 
   },
+
   bagIcon: {
-    width: width * 0.7, // diperbesar dari 0.4 → 0.5
-    height: width * 0.7,
+    width: 220, 
+    height: 220,
     resizeMode: 'contain',
-    position: 'absolute',
-    top: height * 0.37, // sedikit turun agar proporsional
-    left: -29, 
-    zIndex: 2, // pastikan di atas oval
+    marginBottom: 1,
+    marginLeft: -13,  
   },
-  content: {
+
+  textWrapper: {
     width: '100%',
-    paddingHorizontal: 24,
-    marginTop: height * 0.45, // dikurangi dari 0.4 → lebih dekat ke icon
-    marginBottom: 35,
   },
+
   title: {
-    fontSize: 42,
-    fontWeight: 'bold',
-    color: '#242424',
-    textAlign: 'left',
+    fontSize: 32,
+    fontWeight: '800', 
+    color: '#1A1A1A', 
     marginBottom: 15,
-  },
-  subtitle: {
-    fontSize: 19,
-    color: '#666',
+    lineHeight: 40,   
     textAlign: 'left',
+  },
+
+  subtitle: {
+    fontSize: 16,
+    color: '#666666', 
     lineHeight: 24,
-    paddingRight: '15%',
+    textAlign: 'left',
+    maxWidth: '80%',  
   },
-  buttonContainer: {
+
+  bottomSection: {
     width: '100%',
-    paddingHorizontal: 23,
-    paddingBottom: 40,
-  },
-  continueButton: {
-    backgroundColor: '#2CA58D',
-    borderRadius: 25,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-  },
-    loadingButton: {
-    backgroundColor: '#FFD60A', // warna kuning saat loading
-  },
-    loadingIndicator: {
-    position: 'absolute',
+    alignItems: 'center',
   },
 });

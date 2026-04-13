@@ -2,58 +2,110 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import NextButton from '../../components/ui/NextButton';
+import NextButton from '../../components/onboarding/NextButton';
+import { useAuth } from '../../hooks/useAuth';
+import UniversalAlert, { UniversalAlertProps } from '@/components/common/UniversalAlert';
+import { loginWithGoogleApi } from '@/services/auth.api';
 
 export default function ChangeAccountScreen() {
   const router = useRouter();
-  const [selectedMethod, setSelectedMethod] = useState('google');
+  const [selectedMethod, setSelectedMethod] = useState<'google' | 'email' | null>(null); 
+  const { user, loading, loginWithGoogle, logout, syncUser } = useAuth();
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertConfig, setAlertConfig] = useState<Partial<UniversalAlertProps>>({});
+  
+  
+ const handleSignIn = async () => {
+  setSelectedMethod('google');
+  try {
+   const result = await loginWithGoogle();
+    console.log("Login sukses, mengalihkan ke verifikasi telepon...");
+    router.push('/(auth)/verify-phone');
+  } catch (error) {
+    console.error("Gagal login:", error);
+    setAlertConfig({
+      type: 'error',
+      title: 'Login Gagal!',
+      message: 'Login gagal, silakan coba lagi.',
+      confirmText: 'Coba Lagi',
+    });
+    setAlertVisible(true);
+  }
+};
 
-  return (
-    <View style={styles.container}>
-     
-      <Image source={require('../../assets/images/Location.png')} style={styles.icon} />
+return (
+  <View style={styles.container}>
+    <Image source={require('../../assets/images/Location.png')} style={styles.icon} />
 
-      <Text style={styles.title}>Add Account</Text>
-      <Text style={styles.subtitle}>Store the best of your journey with us{"\n"}and share it with your friends</Text>
+    <Text style={styles.title}>Add Account</Text>
+    <Text style={styles.subtitle}>Store the best of your journey with us{"\n"}and share it with your friends</Text>
 
-      <TouchableOpacity
-        style={[
-          styles.accountItem,
-          selectedMethod === 'google' && styles.accountItemSelected
-        ]}
-        onPress={() => setSelectedMethod('google')}
-      >
-        <View style={styles.iconCircle}>
-          <Text style={styles.iconText}>G</Text>
-        </View>
-        <Text style={styles.accountName}>Continue with Google</Text>
-        {selectedMethod === 'google' && <Feather name="check" size={20} color="#FDB813" />}
-      </TouchableOpacity>
+    {/* Google */}
+    <TouchableOpacity
+      style={[
+        styles.accountItem,
+        selectedMethod === 'google' && styles.accountItemSelected
+      ]}
+      onPress={() => setSelectedMethod('google')} 
+      disabled={loading}
+    >
+      <View style={[styles.iconCircle, { backgroundColor: '#fff', borderColor: '#EAEAEA', borderWidth: 1 }]}>
+        <Image
+          source={require('../../assets/images/Google icon Login.png')}
+          style={{ width: 24, height: 24, resizeMode: 'contain' }}
+        />
+      </View>
 
-      
-      <TouchableOpacity
-        style={[
-          styles.accountItem,
-          selectedMethod === 'email' && styles.accountItemSelected
-        ]}
-        onPress={() => setSelectedMethod('email')}
-      >
-        <View style={[styles.iconCircle, { backgroundColor: '#fff', borderColor: '#EAEAEA', borderWidth: 1 }]}>
-          <Feather name="user" size={18} color="#FF4D4D" />
-        </View>
-        <TouchableOpacity style={styles.accountName} onPress={()=> router.push('/(auth)/Register')}>
-        <Text style={styles.accountName}>Start with Email</Text>
-        {selectedMethod === 'email' && <Feather name="check" size={20} color="#FDB813" />}
-        </TouchableOpacity>
-      </TouchableOpacity>
+      <Text style={styles.accountName}>
+        {loading ? "Processing..." : "Continue with Google"}
+      </Text>
 
-      
-       <View style={{ flex: 1, justifyContent: 'center' }}>
-      
-        <NextButton title="Change Account" onPress={() => console.log('Change account pressed')} />
+      {selectedMethod === 'google' && (
+        <Feather name="check" size={20} color="#FDB813" />
+      )}
+    </TouchableOpacity>
+
+    {/* Email */}
+    <TouchableOpacity
+      style={[
+        styles.accountItem,
+        selectedMethod === 'email' && styles.accountItemSelected
+      ]}
+      onPress={() => setSelectedMethod('email')} 
+    >
+      <View style={[styles.iconCircle, { backgroundColor: '#fff', borderColor: '#EAEAEA', borderWidth: 1 }]}>
+        <Feather name="mail" size={18} color="#FF4D4D" />
+      </View>
+
+      <Text style={styles.accountName}>Sign in with Email</Text>
+
+      {selectedMethod === 'email' && (
+        <Feather name="check" size={20} color="#FDB813" />
+      )}
+    </TouchableOpacity>
+
+    <UniversalAlert
+      {...(alertConfig as UniversalAlertProps)}
+      visible={alertVisible}
+      onConfirm={() => setAlertVisible(false)}
+      onCancel={() => setAlertVisible(false)}
+    />
+
+    <View style={{ marginTop: 24 }}>
+      <NextButton
+        title="Continue"
+        disabled={!selectedMethod || loading}
+        onPress={() => {
+          if (selectedMethod === 'google') {
+            handleSignIn(); 
+          } else if (selectedMethod === 'email') {
+            router.push('/(auth)/Register');
+          }
+        }}
+      />
     </View>
-    </View>
-  );
+  </View>
+);
 }
 const styles = StyleSheet.create({
   container: {

@@ -1,4 +1,4 @@
-package com.anonymous.MusicPlayerFixed
+package com.anonymous.musicplayerfixed
 
 import android.app.Application
 import android.content.res.Configuration

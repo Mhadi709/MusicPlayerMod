@@ -1,90 +1,150 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, Image } from 'react-native';
-import { useRouter } from 'expo-router';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, Image, ActivityIndicator } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import NextButton from '../../components/ui/NextButton';
-import OtpInput from '../../components/ui/OtpInput';
+import NextButton from '../../components/onboarding/NextButton';
+import OtpInput from '../../components/onboarding/OtpInput';
+import { confirmationStore } from './verify-phone';
+import { loginWithPhoneApi } from '@/services/auth.api';
+import { useAuth } from '@/hooks/useAuth';
+import UniversalAlert, { UniversalAlertProps } from '@/components/common/UniversalAlert';
+import { getIdToken } from '@react-native-firebase/auth';
+import { getAuth, signInWithPhoneNumber } from '@react-native-firebase/auth';
 
 export default function VerifyPhoneOtpScreen() {
   const router = useRouter();
-
-  const handleVerify = () => {
-    console.log('Verify button pressed!');
-    router.replace('/(auth)/Login_Success');
-  };
-
-  const handleResendCode = () => {
-    console.log('Resend button pressed!');
-    setTimeLeft(120); 
-  };
-
+  const auth = getAuth();
+  const { phone } = useLocalSearchParams(); 
   const [otpCode, setOtpCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(120); // 2 menit dalam detik
+  const [timeLeft, setTimeLeft] = useState(120);
+  const { syncUser } = useAuth();
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertConfig, setAlertConfig] = useState<Partial<UniversalAlertProps>>({});
 
-const isButtonDisabled = otpCode.length < 4 || timeLeft <= 0;
+   const handleSendOtp = async () => {
+    try {
+      const auth = getAuth();
+      const phoneStr = Array.isArray(phone) ? phone[0] : phone;
+     confirmationStore.result = await signInWithPhoneNumber(auth, phoneStr);
+      router.push({
+        pathname: '/(auth)/verify-phone-otp',
+        params: { phone: phoneStr }
+      });
+    } catch (e) {
+      console.log("Error send OTP:", e);
+    }
+  };
 
+const handleVerify = async (otpParam?: string) => { 
+  const codeToVerify = otpParam || otpCode;
+  
+  if (!confirmationStore.result) {
+    setAlertConfig({
+      type: 'warning',
+      title: 'Sesi Berakhir!',
+      message: 'Sesi berakhir, silakan kirim ulang kode.',
+      confirmText: 'OK',
+    });
+    setAlertVisible(true);
+    return;
+  }
+
+  try {
+    setIsLoading(true);
+    // Pakai codeToVerify bukan otpCode
+const userCredential = await confirmationStore.result.confirm(codeToVerify);
+    const idToken = await getIdToken(userCredential.user); 
+    const backendRes = await loginWithPhoneApi(idToken);
+    
+    if (backendRes.userId) {
+      syncUser(backendRes.user, backendRes.userId);
+      router.replace('/(auth)/Login_Success');
+    } else {
+      throw new Error("Backend did not return user ID");
+    }
+  } catch (error: any) {
+    console.error(error);
+    setAlertConfig({
+      type: 'error',
+      title: 'Verifikasi Gagal!',
+      message: 'Kode OTP salah atau sudah kadaluarsa.',
+      confirmText: 'Coba Lagi',
+    });
+    setAlertVisible(true);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+
+
+const isButtonDisabled = otpCode.length < 6 || timeLeft <= 0;
   useEffect(() => {
     if (timeLeft > 0) {
       const timer = setInterval(() => {
         setTimeLeft((prev) => prev - 1);
       }, 1000);
-      return () => clearInterval(timer); // Cleanup timer
+      return () => clearInterval(timer); 
     }
   }, [timeLeft]);
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
+return (
+  <SafeAreaView style={styles.safeArea}>
+    <StatusBar barStyle="dark-content" />
+    <View style={styles.container}>
+      <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <Feather name="arrow-left" size={24} color="#000" />
+      </TouchableOpacity>
 
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" />
-      <View style={styles.container}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Feather name="arrow-left" size={24} color="#000" />
-        </TouchableOpacity>
+      <View style={styles.content}>
+        <Image source={require('../../assets/images/key.png')} style={styles.keyIcon} />
+        <Text style={styles.title}>Verify Account</Text>
+        <Text style={styles.subtitle}>
+          Enter the 6 numbers we sent to the phone number to verify
+        </Text>
 
-        <View style={styles.content}>
-          <Image source={require('../../assets/images/key.png')} style={styles.keyIcon} />
-          <Text style={styles.title}>Verify Account</Text>
-          <Text style={styles.subtitle}>
-            Enter the 4 numbers we sent to the phone number to verify
+        <OtpInput
+          length={6}
+          onComplete={(otp) => {
+            setOtpCode(otp);
+            handleVerify(otp);
+          }}
+        />
+
+        <View style={styles.timerContainer}>
+          <Text style={styles.timerText}>
+            Time left: {minutes}:{seconds < 10 ? `0${seconds}` : seconds}
           </Text>
-
-          <OtpInput 
-            length={4} 
-            onComplete={(otp) => {
-              console.log('OTP Entered:', otp);
-              setOtpCode(otp);
-            }} 
-          />
-
-          <View style={styles.timerContainer}>
-            <Text style={styles.timerText}>
-              Time left: {minutes}:{seconds < 10 ? `0${seconds}` : seconds}
-            </Text>
-          </View>
-
-         <View style={styles.resendContainer}>
-            <Text style={styles.resendText}>Didn't receive the code? </Text>
-            <TouchableOpacity onPress={handleResendCode} disabled={timeLeft > 0}>
-              <Text style={[styles.resendLink, timeLeft > 0 && styles.resendLinkDisabled]}>
-                Resend
-              </Text>
-            </TouchableOpacity>
-          </View>
         </View>
 
-        <View style={styles.buttonContainer}>
-          <NextButton
-            title="Verify"
-            onPress={handleVerify}
-            disabled={isButtonDisabled}
-          />
+        <View style={styles.resendContainer}>
+          <Text style={styles.resendText}>Didn't receive the code? </Text>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Text style={styles.resendLink}>Resend Code</Text>
+          </TouchableOpacity>
         </View>
       </View>
-    </SafeAreaView>
-  );
+
+      <UniversalAlert
+        {...(alertConfig as UniversalAlertProps)}
+        visible={alertVisible}
+        onConfirm={() => setAlertVisible(false)}
+        onCancel={() => setAlertVisible(false)}
+      />
+
+      <View style={styles.buttonContainer}>
+        <NextButton
+          title="Verify"
+          onPress={handleVerify}
+          disabled={isButtonDisabled}
+        />
+      </View>
+    </View>
+  </SafeAreaView>
+);
 }
 
 const styles = StyleSheet.create({
@@ -99,8 +159,8 @@ const styles = StyleSheet.create({
   backButton: {},
   content: {
     flex: 1,
-    justifyContent: 'flex-start', // Tetap pusatkan secara vertikal
-    alignItems: 'flex-start', // Ubah ini ke flex-start untuk sebelah kiri
+    justifyContent: 'flex-start', 
+    alignItems: 'flex-start', 
     paddingTop: 20,
   },
   keyIcon: {
@@ -109,7 +169,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   otpWrapper: {
-    marginTop: -50, // Dorong ke atas (sesuaikan nilai ini sesuai kebutuhan)
+    marginTop: -50,
   },
   title: {
     fontSize: 32,
@@ -126,11 +186,11 @@ const styles = StyleSheet.create({
     alignItems :'flex-start',
   },
  resendContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start', // Ubah ke flex-start untuk menempelkan elemen
-    alignItems: 'center', // Pastikan vertikal sejajar
-    marginTop: 10, // Kurangi jarak dari atas jika perlu
-  },
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
+  marginTop: 16,
+},
   timerContainer: {
     marginTop: 10,
     marginBottom: 10,
@@ -139,24 +199,37 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
   },
-  resendText: {
-    fontSize: 15,
-    color: '#666',
-    marginRight: 4, // Kurangi jarak di antara teks
-  },
+ resendText: {
+  fontSize: 14,
+  color: "#666",
+},
   resendLink: {
-    fontSize: 15,
-    color: '#FDB813',
-    fontWeight: 'bold',
-  },
+  fontSize: 14,
+  color: "#FDB813",
+  fontWeight: "bold",
+},
   buttonContainer: {
     paddingBottom: 20,
   },
   resendLinkDisabled: {
-    color: '#D3D3D3', // Warna abu-abu saat disabled
+    color: '#D3D3D3', 
   },
+  verifyButton: {
+  backgroundColor: '#FDB813',
+  borderRadius: 16,
+  paddingVertical: 16,
+  alignItems: 'center',
+  justifyContent: 'center',
+  minHeight: 52,
+},
+verifyButtonDisabled: {
+  backgroundColor: '#E0E0E0',
+},
+verifyButtonText: {
+  color: '#fff',
+  fontSize: 16,
+  fontWeight: '600',
+},
 });
 
-// function setTimeLeft(arg0: number) {
-//   throw new Error('Function not implemented.');
-// }
+

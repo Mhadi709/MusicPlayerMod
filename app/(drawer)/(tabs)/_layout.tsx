@@ -1,18 +1,15 @@
-import React from "react";
-import { Slot } from "expo-router";
-import MiniNavbar from "../../../components/MiniNavbar";
-import MiniPlayer from "@/components/MiniPlayer";
+import { Tabs } from "expo-router";
 
-export default function TabLayout() {
+export default function TabsLayout() {
   return (
-    <>
-      {/* Tempat menampilkan isi halaman */}
-      <Slot />
-
-      {/* Navbar tetap muncul di bawah */}
-      <MiniNavbar />
-
-        <MiniPlayer />
-    </>
+    <Tabs screenOptions={{headerShown: false, tabBarStyle: { display: "none" }, }}>
+      <Tabs.Screen name="homepage" />
+      <Tabs.Screen name="DiscoverPage" />
+      <Tabs.Screen name="ExplorePage" />
+      <Tabs.Screen name="profil" />
+      <Tabs.Screen name="songs" />
+      <Tabs.Screen name="playlist" />
+      <Tabs.Screen name="podcasts" />
+    </Tabs>
   );
 }

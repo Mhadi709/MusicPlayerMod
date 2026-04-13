@@ -26,12 +26,18 @@ npm-debug.*
 yarn-debug.*
 yarn-error.*
 
+# .gitignore
+google-services.json
+GoogleService-Info.plist
+
 # macOS
 .DS_Store
 *.pem
 
 # local env files
-.env*.local
+.env
+.env.local
+.env.*
 
 # typescript
 *.tsbuildinfo

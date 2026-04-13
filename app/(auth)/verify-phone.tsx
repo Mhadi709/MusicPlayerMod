@@ -1,152 +1,226 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput,KeyboardAvoidingView, Image, Platform } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { 
+  View, Text, StyleSheet, Image, Platform, 
+  KeyboardAvoidingView, ScrollView, TouchableWithoutFeedback, Keyboard 
+} from 'react-native';
 import { useRouter } from 'expo-router';
-import NextButton from '../../components/ui/NextButton';
-import CountryFlag from 'react-native-country-flag';
-import LoadingIndicator from '../../components/ui/LoadingIndicator';
+import PhoneInput from "react-native-phone-number-input";
+import { getAuth, signInWithPhoneNumber } from '@react-native-firebase/auth';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import NextButton from '../../components/onboarding/NextButton';
+import LoadingIndicator from '../../components/common/LoadingIndicator';
+import UniversalAlert, { UniversalAlertProps } from '@/components/common/UniversalAlert';
+
+export const confirmationStore = {
+  result: null as any
+};
 
 export default function VerifyPhoneScreen() {
   const router = useRouter();
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [isButtonDisabled, setIsButtonDisabled] = useState(true);
-const [isLoading, setIsLoading] = useState(false);
+  const [value, setValue] = useState("");
+  const [formattedValue, setFormattedValue] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertConfig, setAlertConfig] = useState<Partial<UniversalAlertProps>>({});
+  const isButtonDisabled = value.length < 8;
 
-  const handleVerify = () => {
-    // Logika verifikasi
-  };
+  const phoneInput = useRef<PhoneInput>(null);
 
-  const handlePhoneChange = (text: string) => {
-    setPhoneNumber(text);
-    setIsButtonDisabled(text.trim().length === 0);
-  };
-   const handleRegister = async () => {
-    setIsLoading(true);
+  const handleSendCode = async () => {
+  const checkValid = phoneInput.current?.isValidNumber(value);
+      if (!checkValid) {
+        setAlertConfig({
+          type: 'warning',
+          title: 'Nomor Tidak Valid!',
+          message: 'Masukkan nomor telepon yang valid sebelum melanjutkan.',
+          confirmText: 'OK',
+        });
+        setAlertVisible(true);
+        return;
+      }
 
-    // Simulasi proses registrasi (misalnya, menyimpan data ke server)
-    await new Promise(resolve => setTimeout(resolve, 1500));
+      try {
+        setIsLoading(true);
+       const authInstance = getAuth();
+      const confirmation = await signInWithPhoneNumber(authInstance, formattedValue);
+      confirmationStore.result = confirmation; 
+      router.push({
+        pathname: '/(auth)/verify-phone-otp',
+        params: { phone: formattedValue }
+      });
+      } catch (error: any) {
+        setAlertConfig({
+          type: 'error',
+          title: 'Gagal Mengirim SMS!',
+          message: 'Gagal mengirim SMS: ' + error.message,
+          confirmText: 'Coba Lagi',
+        });
+        setAlertVisible(true);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    setIsLoading(false);
+   return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20} 
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={{ flex: 1 }}> 
+            
+            <ScrollView 
+              contentContainerStyle={{ flexGrow: 1 }}
+              keyboardShouldPersistTaps="handled"
+              bounces={false}
+            >
+              <View style={styles.innerContainer}>
+                <Image 
+                  source={require('../../assets/images/telephone.png')} 
+                  style={styles.phoneIcon} 
+                />
+                <Text style={styles.title}>Verify Account</Text>
+                <Text style={styles.subtitle}>
+                  We will send a message to your phone number for verification
+                </Text>
 
-    // =======================================================
-    // NAVIGASI KE HALAMAN VERIFIKASI OTP DI SINI
-    // =======================================================
-    // Gunakan 'push' agar pengguna bisa kembali jika perlu
-    router.push('/(auth)/verify-phone-otp');
-  };
+                <View style={styles.inputContainer}>
+              <PhoneInput
+                ref={phoneInput}
+                defaultValue={value}
+                defaultCode="US"
+                layout="second" 
+                autoFocus
+                onChangeText={setValue}
+                onChangeFormattedText={setFormattedValue}
+                containerStyle={styles.phoneContainer}
+                flagButtonStyle={styles.flagButton}
+                textContainerStyle={styles.textInputContainer}
+                textInputStyle={styles.phoneTextInput}
+                codeTextStyle={styles.codeText}
+                withShadow={false}
+                renderDropdownImage={<View style={styles.dropdownIcon} />}
+              />
+           </View>
+              </View>
+            </ScrollView>
 
-return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
-    >
-      <View style={styles.innerContainer}>
-        <Image source={require('../../assets/images/telephone.png')} style={styles.phoneIcon} />
-        <Text style={styles.title}>Verify Account</Text>
-        <Text style={styles.subtitle}>
-          We will send a message to your phone number for verification
-        </Text>
-
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>PHONE NUMBER</Text>
-          <View style={styles.phoneInputWrapper}>
-            <CountryFlag isoCode="US" size={16} style={styles.flagIcon} />
-            <Text style={styles.countryCode}>+1</Text>
-            <TextInput
-              style={styles.phoneInput}
-              placeholder="Your phone number"
-              placeholderTextColor="#aaa"
-              keyboardType="phone-pad"
-              value={phoneNumber}
-              onChangeText={handlePhoneChange}
+            <UniversalAlert
+            {...(alertConfig as UniversalAlertProps)}
+            visible={alertVisible}
+            onConfirm={() => setAlertVisible(false)}
+            onCancel={() => setAlertVisible(false)}
             />
-          </View>
-        </View>
+            <View style={styles.buttonContainer}>
+              {isLoading ? (
+                <LoadingIndicator />
+              ) : (
+                <NextButton
+                  title="Create new Account"
+                  onPress={handleSendCode}
+                  disabled={isButtonDisabled}
+                />
+              )}
+            </View>
 
-         <View style={styles.buttonContainer}>
-          {isLoading ? (
-            <LoadingIndicator />
-          ) : (
-            // Hubungkan tombol ke fungsi handleRegister
-            <NextButton
-              title="Create new Account"
-              onPress={handleRegister}
-            />
-          )}
-        </View>
-      </View>
-    </KeyboardAvoidingView>
+          </View> 
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
   innerContainer: {
-    flex: 1,
     padding: 24,
-    justifyContent: 'flex-start',
-  },
-  backButton: {
-    position: 'absolute',
-    top: 24,
-    left: 0,
-  },
-  backText: {
-    fontSize: 24,
-    color: '#000',
   },
   phoneIcon: {
-    width: 105,
-    height: 105,
-    marginTop: 40,
+    width: 100,
+    height: 100,
+    marginTop: 20,
     marginBottom: 20,
+    resizeMode: 'contain',
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
     color: '#FDB813',
-    marginBottom: 16,
+    marginBottom: 10,
   },
   subtitle: {
     fontSize: 14,
     color: '#666',
+    lineHeight: 20,
     marginBottom: 40,
   },
-  inputContainer: {
-    marginBottom: 20,
+   inputContainer: {
+    marginTop: 20,
+    width: '100%',
   },
-  label: {
+   floatingLabel: {
+    position: 'absolute',
+    left: 105, 
+    top: -5,
     fontSize: 12,
     color: '#8e8e8e',
-    marginBottom: 8,
+    zIndex: 1,
   },
-  phoneInputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  phoneContainer: {
+    width: '100%',
+    height: 60,
+    backgroundColor: 'transparent',
+  },
+  flagButton: {
+    width: 80, 
+    height: 45,
+    backgroundColor: 'transparent',
     borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-    paddingVertical: 8,
+    borderBottomColor: '#E0E0E0',
+    marginTop: 15,
+    justifyContent: 'center',
   },
-  flagIcon: {
-    marginRight: 8,
+  textInputContainer: {
+    backgroundColor: 'transparent',
+    height: 45,
+    marginTop: 15,
+    marginLeft: 25, 
+    borderBottomWidth: 2,
+    borderBottomColor: '#4A6572', 
+    paddingHorizontal: 0,
   },
-  countryCode: {
+  codeText: {
     fontSize: 16,
-    color: '#333',
-    marginRight: 8,
+    color: '#000',
+    fontWeight: 'bold', 
+    marginRight: 5,
   },
-  phoneInput: {
-    flex: 1,
-    height: 40,
+  phoneTextInput: {
     fontSize: 16,
-    color: '#333',
+    color: '#000',
+    height: 45,
+    paddingLeft: 0,
   },
+  dropdownIcon: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 4,
+    borderRightWidth: 4,
+    borderTopWidth: 4,
+    borderStyle: 'solid',
+    backgroundColor: 'transparent',
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: '#8e8e8e',
+    marginLeft: 10,
+  },
+
   buttonContainer: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    marginBottom: 70,
+   paddingBottom: Platform.OS === 'ios' ? 20 : 30, 
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    width: '100%',
   },
 });

@@ -7,15 +7,15 @@ export default function AuthLayout() {
       <Stack.Screen 
         name="login" 
         options={{ 
-          title: '', // Judul kosong
-          headerShadowVisible: false, // Opsional: menghilangkan garis bayangan di bawah header
-          headerStyle: { backgroundColor: '#fff' }, // Opsional: memastikan warna header putih
+          title: '', 
+          headerShadowVisible: false,
+          headerStyle: { backgroundColor: '#fff' }, 
         }} 
       />
       <Stack.Screen name="change-account" options={{ 
-          title: '', // Judul kosong
-          headerShadowVisible: false, // Opsional: menghilangkan garis bayangan di bawah header
-          headerStyle: { backgroundColor: '#fff' }, // Opsional: memastikan warna header putih
+          title: '', 
+          headerShadowVisible: false, 
+          headerStyle: { backgroundColor: '#fff' }, 
         }}  />
           <Stack.Screen 
         name="verify-phone" 
@@ -26,7 +26,7 @@ export default function AuthLayout() {
       />
         <Stack.Screen 
         name="Login_Success" 
-        options={{ headerShown: false }} // Ini akan menyembunyikan header & tombol kembali
+        options={{ headerShown: false }} 
       />
       <Stack.Screen name="verify-phone-otp" options={{ headerShown: false }} />
     </Stack>

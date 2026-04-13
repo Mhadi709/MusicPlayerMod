@@ -1,354 +1,265 @@
-import React, { ReactNode, useState } from "react";
-import { View, Text, StyleSheet, Image, FlatList, TouchableOpacity, } from "react-native";
-import { useRouter, useSegments } from "expo-router"; // Ingat useSegments hanya jika Anda membutuhkannya
-import Layout from "@/components/hederLayout"; // Sesuaikan path jika berbeda
-import { Feather, MaterialIcons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient"; // Pastikan expo-linear-gradient sudah diinstal
+import React, { useState, useEffect, useCallback } from "react";
+import { View, Text, StyleSheet, Image, FlatList, TouchableOpacity, ActivityIndicator } from "react-native";
+import { useRouter } from "expo-router";
+import Layout from "../../../components/layout/hederLayout";
+import { MaterialIcons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import MiniNavbar from "@/components/layout/MiniNavbar";
+import { useAuth } from "@/hooks/useAuth";
+import { getUserPlaylistsApi } from "@/services/auth.api";
+import { Image as ExpoImage } from 'expo-image'; 
+import { useFocusEffect } from "expo-router"; 
 
-type Song = {
-  id: string;
-  title: string;
-  artist: string;
-  album: string;
-  duration: string;
-  thumbnailUrl: string;
-  category: string;
-  year: string;
-  description: string;
-};
-
-type PodcastEpisode = {
-  description: ReactNode;
-  category: ReactNode;
-  year: ReactNode;
-  id: string;
-  title: string;
-  showName: string;
-  publisher: string;
-  duration: string;
-  thumbnailUrl: string;
-  
-};
-
-// 2. Buat data dummy untuk ditampilkan dalam daftar
-const dummySongs: Song[] = [
-  {
-    id: '1',
-    title: 'Glimpse of Us',
-    artist: 'Joji',
-    album: 'SMITHEREENS',
-    duration: '3:53',
-    thumbnailUrl: 'https://picsum.photos/seed/song1/200',
-    category: 'Pop',
-    year: '2022',
-    description: 'Hit single dari album SMITHEREENS.',
-  },
-  {
-    id: '2',
-    title: 'As It Was',
-    artist: 'Harry Styles',
-    album: "Harry's House",
-    duration: '2:47',
-    thumbnailUrl: 'https://picsum.photos/seed/song2/200',
-    category: 'Pop',
-    year: '2022',
-    description: 'Lagu populer dari Harry Styles.',
-  },
-  {
-    id: '3',
-    title: 'Anti-Hero',
-    artist: 'Taylor Swift',
-    album: 'Midnights',
-    duration: '3:20',
-    thumbnailUrl: 'https://picsum.photos/seed/song3/200',
-    category: 'Pop',
-    year: '2022',
-    description: 'Single utama dari album Midnights.',
-  },
-  {
-    id: '4',
-    title: 'Blinding Lights',
-    artist: 'The Weeknd',
-    album: 'After Hours',
-    duration: '3:20',
-    thumbnailUrl: 'https://picsum.photos/seed/song4/200',
-    category: 'Synthwave',
-    year: '2020',
-    description: 'Lagu mega-hit dari The Weeknd.',
-  },
-  {
-    id: '5',
-    title: 'Bohemian Rhapsody',
-    artist: 'Queen',
-    album: 'A Night at the Opera',
-    duration: '5:55',
-    thumbnailUrl: 'https://picsum.photos/seed/song5/200',
-    category: 'Rock',
-    year: '1975',
-    description: 'Klasik sepanjang masa dari Queen.',
-  },
-];
-
-const dummyPodcasts: PodcastEpisode[] = [
-  {
-   id: '1',
-  title: 'The Future of AI with Sam Altman',
-  showName: 'Tech Forward',
-  publisher: 'The Verge',
-  duration: '45 min',
-  thumbnailUrl: 'https://picsum.photos/seed/podcast1/200',
-  description: 'Exploring how AI is shaping our future with insights from OpenAI CEO Sam Altman.',
-  category: 'Technology',
-  year: '2023',
-  },
-  {
-    id: '2',
-    title: 'A Deep Dive into Stoicism',
-    showName: 'The Daily Stoic',
-    publisher: 'Ryan Holiday',
-    duration: '28 min',
-    thumbnailUrl: 'https://picsum.photos/seed/podcast2/200',
-   description: 'Exploring how AI is shaping our future with insights from OpenAI CEO Sam Altman.',
-    category: 'health',
-    year: '2024',
-  },
-  {
-    id: '3',
-    title: 'How to Build Good Habits',
-    showName: 'The Knowledge Project',
-    publisher: 'Farnam Street',
-    duration: '1 hr 12 min',
-    thumbnailUrl: 'https://picsum.photos/seed/podcast3/200',
-  description: 'Exploring how AI is shaping our future with insights from OpenAI CEO Sam Altman.',
-  category: 'lifestyle',
-  year: '2023',
-  },
-  {
-    id: '4',
-    title: 'The Science of Sleep',
-    showName: 'Huberman Lab',
-    publisher: 'Andrew Huberman',
-    duration: '2 hr 5 min',
-    thumbnailUrl: 'https://picsum.photos/seed/podcast4/200',
-  description: 'Exploring how AI is shaping our future with insights from OpenAI CEO Sam Altman.',
-  category: 'lifestyle',
-  year: '2023',
-  },
-  {
-    id: '5',
-    title: 'The Science of Sleep',
-    showName: 'Huberman Lab',
-    publisher: 'Andrew Huberman',
-    duration: '2 hr 5 min',
-    thumbnailUrl: 'https://picsum.photos/seed/podcast4/200',
-  description: 'Exploring how AI is shaping our future with insights from OpenAI CEO Sam Altman.',
-  category: 'lifestyle',
-  year: '2023',
-  },
-  {
-    id: '6',
-    title: 'The Science of Sleep',
-    showName: 'Huberman Lab',
-    publisher: 'Andrew Huberman',
-    duration: '2 hr 5 min',
-    thumbnailUrl: 'https://picsum.photos/seed/podcast4/200',
-  description: 'Exploring how AI is shaping our future with insights from OpenAI CEO Sam Altman.',
-  category: 'lifestyle',
-  year: '2023',
-  },
-];
-
-// --- Card Song ---
-const SongCard: React.FC<{ item: Song }> = ({ item }) => (
-  <LinearGradient
-    colors={["#0B3129", "#219780"]}
-    start={{ x: 0.3, y: 0.3 }}
-    end={{ x: 1, y: 1 }}
-    style={Styles.recommendedCard}
-  >
-    <Image source={{ uri: item.thumbnailUrl }} style={Styles.recommendedThumbnail} />
-
-    <View style={Styles.recommendedInfo}>
-      <Text style={Styles.recommendedTitle}>{item.title}</Text>
-      <Text style={Styles.recommendedMeta}>
-        {item.category} • {item.year}
-      </Text>
-      <Text style={Styles.recommendedDesc}>{item.description}</Text>
-    </View>
-
-    <View style={Styles.iconsContainer}>
-      <TouchableOpacity style={Styles.playButton}>
-        <MaterialIcons name="play-circle-filled" size={30} color="#12F0C4" />
-      </TouchableOpacity>
-
-      <TouchableOpacity style={{ marginLeft: 3 }}>
-        <MaterialIcons name="more-vert" size={24} color="#FFFFFF" />
-      </TouchableOpacity>
-    </View>
-  </LinearGradient>
+const NoPlaylistPlaceholder = () => (
+  <View style={Styles.emptyContainer}>
+    <Image 
+      source={require("../../../assets/images/NoPlyalist.png")} 
+      style={Styles.emptyImage} 
+    />
+    <Text style={Styles.emptyTitle}>No Playlists Available</Text>
+  </View>
 );
-
-// --- Card Podcast ---
-const RecommendedPodcastCard: React.FC<{ item: PodcastEpisode }> = ({ item }) => (
-  <LinearGradient
-    colors={["#0B3129", "#219780"]}
-    start={{ x: 0.3, y: 0.3 }}
-    end={{ x: 1, y: 1 }}
-    style={Styles.recommendedCard}
-  >
-    <Image source={{ uri: item.thumbnailUrl }} style={Styles.recommendedThumbnail} />
-
-    <View style={Styles.recommendedInfo}>
-      <Text style={Styles.recommendedTitle}>{item.title}</Text>
-      <Text style={Styles.recommendedMeta}>
-        {item.category} • {item.year}
-      </Text>
-      <Text style={Styles.recommendedDesc}>{item.description}</Text>
+function PlaylistCover({ item, covers }: { item: any; covers: string[] }) {
+  if (covers.length >= 4) {
+    return (
+      <View style={coverStyles.grid}>
+        {covers.map((uri, i) => (
+          <ExpoImage key={i} source={{ uri }} style={coverStyles.gridItem} contentFit="cover" cachePolicy="memory-disk" />
+        ))}
+      </View>
+    );
+  }
+  if (covers.length > 0) {
+    return <ExpoImage source={{ uri: covers[0] }} style={coverStyles.single} contentFit="cover" cachePolicy="memory-disk" />;
+  }
+  return (
+    <View style={coverStyles.placeholder}>
+      <Text style={coverStyles.placeholderText}>{item.name?.substring(0, 1).toUpperCase()}</Text>
     </View>
+  );
+}
 
-    <View style={Styles.iconsContainer}>
-      <TouchableOpacity style={Styles.playButton}>
-        <MaterialIcons name="play-circle-filled" size={30} color="#12F0C4" />
+const coverStyles = StyleSheet.create({
+  grid: { width: 85, height: 85, flexDirection: "row", flexWrap: "wrap", borderRadius: 15, overflow: "hidden", marginRight: 15 },
+  gridItem: { width: 42.5, height: 42.5 },
+  single: { width: 85, height: 85, borderRadius: 15, marginRight: 15 },
+  placeholder: { width: 85, height: 85, borderRadius: 15, marginRight: 15, backgroundColor: "#2CA58D", justifyContent: "center", alignItems: "center" },
+  placeholderText: { color: "#fff", fontSize: 30, fontWeight: "bold" },
+});
+
+const PlaylistCard: React.FC<{ item: any; covers: string[]; onPress: () => void }> = ({ item, covers, onPress }) => {
+  const getCoverUri = () => {
+    if (item.image) return item.image;
+
+    if (item.track_ids && item.track_ids.length > 0) {
+      return `https://usercontent.jamendo.com/?type=track&id=${item.track_ids[0]}&width=300`;
+    }
+
+    // Fallback: Gunakan inisial nama playlist dengan background hijau brand Anda
+    const initials = item.name ? encodeURIComponent(item.name) : "Playlist";
+    return `https://ui-avatars.com/api/?name=${initials}&background=2CA58D&color=fff&size=300`;
+  };
+ return (
+    <LinearGradient
+      colors={["#0B3129", "#219780"]}
+      start={{ x: 0, y: 0.5 }}
+      end={{ x: 1, y: 0.5 }}
+      style={Styles.playlistCard}
+    >
+      <TouchableOpacity onPress={onPress} style={Styles.cardContent}>
+        {/* Ganti ExpoImage lama dengan PlaylistCover */}
+    <PlaylistCover item={item} covers={covers} />
+
+        <View style={Styles.playlistInfo}>
+          <Text style={Styles.playlistTitle} numberOfLines={1}>{item.name}</Text>
+          <Text style={Styles.playlistMeta}>
+            {(item.track_ids || []).length} Tracks • {new Date(item.created_at).getFullYear() || "2024"}
+          </Text>
+        </View>
+
+        <View style={Styles.iconsContainer}>
+          <TouchableOpacity style={Styles.playButton}>
+            <MaterialIcons name="play-circle-filled" size={32} color="#12F0C4" />
+          </TouchableOpacity>
+          <TouchableOpacity style={{ marginLeft: 5 }}>
+            <MaterialIcons name="more-vert" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
       </TouchableOpacity>
-
-      <TouchableOpacity style={{ marginLeft: 3 }}>
-        <MaterialIcons name="more-vert" size={24} color="#FFFFFF" />
-      </TouchableOpacity>
-    </View>
-  </LinearGradient>
-);
-
-// --- Screen utama ---
-
+    </LinearGradient>
+  );
+};
 const SongsScreen: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<"music" | "podcast">("music"); // default music
+  const router = useRouter();
+  const { user } = useAuth();
+  
+  const [activeTab, setActiveTab] = useState<"music" | "podcast">("music");
+  const [playlists, setPlaylists] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (user?.id) loadPlaylists();
+    }, [user?.id])
+  );
+
+  const loadPlaylists = async () => {
+    try {
+      setLoading(true);
+      const data = await getUserPlaylistsApi(user.id);
+      console.log("Data loaded:", data.length, "items");
+      setPlaylists(data);
+    } catch (e) {
+      console.log("Error:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredPlaylists = (playlists || []).filter(item => {
+    const itemType = item.type || "music";
+    return itemType === activeTab;
+  });
 
   return (
     <Layout>
-      <>
+      <View style={{ flex: 1 }}>
         {/* Tab Switch */}
-        <View style={Styles.container}>
+        <View style={Styles.tabContainer}>
           <TouchableOpacity
-            style={[Styles.button, activeTab === "music" && { backgroundColor: "#1F7A67" }]}
+            style={[Styles.tabButton, activeTab === "music" && Styles.tabActive]}
             onPress={() => setActiveTab("music")}
           >
-            <Text style={Styles.buttonText}>Music</Text>
+            <Text style={Styles.tabText}>Music</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[Styles.button, activeTab === "podcast" && { backgroundColor: "#1F7A67" }]}
+            style={[Styles.tabButton, activeTab === "podcast" && Styles.tabActive]}
             onPress={() => setActiveTab("podcast")}
           >
-            <Text style={Styles.buttonText}>Podcasts</Text>
+            <Text style={Styles.tabText}>Podcasts</Text>
           </TouchableOpacity>
         </View>
-
-        {/* Urutan Button */}
-        <TouchableOpacity style={Styles.containerr}>
+        <TouchableOpacity style={Styles.sortButton}>
           <MaterialIcons name="swap-vert" size={22} color="#000" />
-          <Text style={Styles.label}>Urutan</Text>
+          <Text style={Styles.sortLabel}>Urutan</Text>
         </TouchableOpacity>
 
-        {/* FlatList ganti sesuai tab */}
-        {activeTab === "music" ? (
+        {/* Kondisi Loading / Data Ada / Data Kosong */}
+         {loading ? (
+          <ActivityIndicator size="large" color="#2CA58D" style={{ marginTop: 50 }} />
+        ) : filteredPlaylists.length > 0 ? (
           <FlatList
-            data={dummySongs}
-            renderItem={({ item }) => <SongCard item={item} />}
+            data={filteredPlaylists}
+            renderItem={({ item }) => (
+              <PlaylistCard
+                item={item}
+                covers={[]} 
+                onPress={() => router.push({
+                  pathname: "/(drawer)/PlaylistDetailScreen",
+                  params: {
+                    playlistId: item.id,
+                    initialName: item.name,
+                    trackIds: JSON.stringify(item.track_ids || [])
+                  }
+                })}
+              />
+            )}
             keyExtractor={(item) => item.id}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 12, paddingTop: 6 }}
           />
         ) : (
-          <FlatList
-            data={dummyPodcasts}
-            renderItem={({ item }) => <RecommendedPodcastCard item={item} />}
-            keyExtractor={(item) => item.id}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 12, paddingTop: 6 }}
-          />
+          <NoPlaylistPlaceholder />
         )}
-      </>
+      </View>
+      <MiniNavbar />
     </Layout>
   );
 };
 
-// --- Styles ---
 const Styles = StyleSheet.create({
-  container: {
+  tabContainer: {
     flexDirection: "row",
-    justifyContent: "flex-start",
     gap: 10,
     marginVertical: 15,
+    paddingHorizontal: 5,
   },
-  button: {
+  tabButton: {
     backgroundColor: "#2CA58D",
     paddingVertical: 8,
-    paddingHorizontal: 18,
+    paddingHorizontal: 20,
     borderRadius: 20,
   },
-  buttonText: {
+  tabActive: {
+    backgroundColor: "#1F7A67",
+  },
+  tabText: {
     color: "#fff",
     fontSize: 14,
     fontWeight: "600",
   },
-  containerr: {
+  sortButton: {
     flexDirection: "row",
     alignItems: "center",
+    marginBottom: 15,
     paddingHorizontal: 10,
-    paddingVertical: 5,
   },
-  label: {
+  sortLabel: {
     fontSize: 16,
     fontWeight: "500",
     marginLeft: 5,
-    color: "#000",
   },
-  recommendedCard: {
+  playlistCard: {
+    borderRadius: 25,
+    marginHorizontal: 10,
+    marginBottom: 15,
+    height: 110,
+    overflow: 'hidden',
+  },
+  cardContent: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 20,
-    padding: 10,
-    marginHorizontal: 15,
-    marginBottom: 19,
-    marginTop: 3,
-    height: 120,
+    padding: 12,
+  },
+  playlistInfo: {
     flex: 1,
+    justifyContent: 'center',
   },
-  recommendedThumbnail: {
-    width: 70,
-    height: 70,
-    borderRadius: 15,
-    marginRight: 15,
-  },
-  recommendedInfo: {
-    flex: 1,
-  },
-  recommendedTitle: {
-    fontSize: 20,
+  playlistTitle: {
+    fontSize: 18,
     fontWeight: "bold",
     color: "#fff",
   },
-  recommendedMeta: {
-    fontSize: 12,
-    color: "#FFFFFF",
-    marginBottom: 4,
-    marginTop: 3,
-  },
-  recommendedDesc: {
-    fontSize: 12,
-    color: "#A7A7A7",
-  },
-  playButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
+  playlistMeta: {
+    fontSize: 13,
+    color: "rgba(255,255,255,0.7)",
+    marginTop: 4,
   },
   iconsContainer: {
     flexDirection: "row",
     alignItems: "center",
   },
+  playButton: {
+    marginRight: 5,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 40,
+  },
+  emptyImage: {
+    width: 250,
+    height: 250,
+    resizeMode: 'contain',
+  },
+  emptyTitle: {
+    fontSize: 16,
+    color: '#8e8e8e',
+    marginTop: 20,
+    fontWeight: '500',
+  },
 });
 
-export default SongsScreen;  // <-- WAJIB
+export default SongsScreen;

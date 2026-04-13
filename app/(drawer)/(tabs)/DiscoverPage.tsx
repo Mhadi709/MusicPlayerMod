@@ -12,16 +12,9 @@ import {
   FlatList,
   Keyboard,
 } from 'react-native';
-import { router, useNavigation, useRouter } from 'expo-router';
-import { Route } from 'expo-router/build/Route';
-
-// Interface untuk setiap item dalam daftar gabungan
-interface SearchListItem {
-  id: string; // ID unik untuk key
-  text: string;
-  type: 'history' | 'suggestion'; // Membedakan riwayat dan saran
-  
-}
+import {  useNavigation, useRouter } from 'expo-router';
+import { searchMusicJamendo } from "../../../services/music.api";
+import { useSearchHistory } from "@/hooks/useSearchHistory";
 
 // Interface untuk hasil pencarian musik
 interface MusicReference {
@@ -29,93 +22,66 @@ interface MusicReference {
   title: string;
   artist: string;
   image: any;
+  audioUrl: string;
 }
 
 const DiscoverPage = () => {
-   const router = useRouter();
+  const router = useRouter();
+  const { history, addHistory, removeHistory, clearHistory } = useSearchHistory();
 
-  useEffect(() => {
-    // Misalnya: kode khusus halaman ini
-  }, []);
-
-  
   useEffect(() => {
     StatusBar.setBarStyle('dark-content');
   }, []);
 
-  const handleSearchPress =() => {
-    router.push('/(drawer)/(tabs)/ExplorePage');
+  const handleSearchPress = () => {
+    router.push('/ExplorePage');
   };
 
-
-   const allMusic: MusicReference[] = [
-    { id: '1', title: 'Sardaar Ji', artist: 'Diljit Dosanjh', image: require('../../../assets/images/Justin Bieber.jpg') },
-    { id: '2', title: 'Radio', artist: 'Lana Del Rey', image: require('../../../assets/images/Afgan.webp') },
-    { id: '3', title: 'I Guess', artist: 'KRSNA', image: require('../../../assets/images/Ed Sheeran.webp') },
-    { id: '4', title: 'No Cap', artist: 'KRSNA', image: require('../../../assets/images/Justin Bieber.jpg') },
-    { id: '5', title: 'Blinding Lights', artist: 'The Weeknd', image: require('../../../assets/images/Justin Bieber.jpg') },
-    { id: '6', title: 'As It Was', artist: 'Harry Styles', image: require('../../../assets/images/Afgan.webp') },
-    { id: '7', title: 'Levitating', artist: 'Dua Lipa', image: require('../../../assets/images/Ed Sheeran.webp') },
-    { id: '8', title: 'Good 4 U', artist: 'Olivia Rodrigo', image: require('../../../assets/images/Justin Bieber.jpg') },
-    { id: '9', title: 'Stay', artist: 'The Kid LAROI', image: require('../../../assets/images/Afgan.webp') },
-    { id: '10', title: 'Peaches', artist: 'Justin Bieber', image: require('../../../assets/images/Justin Bieber.jpg') },
-    { id: '11', title: 'Peaches', artist: 'Justin Bieber', image: require('../../../assets/images/Justin Bieber.jpg') },
-    { id: '12', title: 'Peaches', artist: 'Justin Bieber', image: require('../../../assets/images/Justin Bieber.jpg') },
-    { id: '13', title: 'Peaches', artist: 'Justin Bieber', image: require('../../../assets/images/Justin Bieber.jpg') },
-    { id: '14', title: 'Peaches', artist: 'Justin Bieber', image: require('../../../assets/images/Justin Bieber.jpg') },
-    { id: '15', title: 'Peaches', artist: 'Justin Bieber', image: require('../../../assets/images/Justin Bieber.jpg') },
-    { id: '16', title: 'Peaches', artist: 'Justin Bieber', image: require('../../../assets/images/Justin Bieber.jpg') },
-  ];
-
-  const allSuggestions: SearchListItem[] = [
-    { id: 's1', text: 'Trending Songs', type: 'suggestion' },
-    { id: 's2', text: 'Popular Artists', type: 'suggestion' },
-    { id: 's3', text: 'New Playlists', type: 'suggestion' },
-    { id: 's4', text: 'Hindia', type: 'suggestion' },
-    { id: 's5', text: 'Heartbreak Anniversary', type: 'suggestion' },
-  ];
+  const navigateToNowPlaying = (item: MusicReference) => {
+    router.push({
+      pathname: '/NowPlayingScreen',
+      params: {
+        id: item.id,
+        title: item.title,
+        artist: item.artist,
+        image: item.image ?? '',
+        audioUrl: item.audioUrl ?? '',
+        lyrics: item.audioUrl ?? '',
+      },
+    });
+  };
 
   // --- STATE MANAGEMENT ---
   const [searchQuery, setSearchQuery] = useState('');
   const [musicResults, setMusicResults] = useState<MusicReference[]>([]);
-  const [searchHistory, setSearchHistory] = useState<SearchListItem[]>([
-    { id: 'h1', text: 'K-Pop Hits', type: 'history' }
-  ]);
-  const [displayList, setDisplayList] = useState<SearchListItem[]>([]);
 
-  // --- LOGIKA UTAMA ---
+  // Suggestions = history yang cocok dengan query saat ini
+  const suggestions = searchQuery
+    ? history.filter(h => h.toLowerCase().includes(searchQuery.toLowerCase()))
+    : [];
 
-  // Efek untuk memfilter daftar saran/riwayat saat mengetik
+  // Efek search dengan debounce
   useEffect(() => {
-    if (searchQuery) {
-      // Saat mengetik, cari musik secara langsung
-      const filteredMusic = allMusic.filter(item =>
-        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.artist.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setMusicResults(filteredMusic);
-
-      // Dan juga siapkan daftar saran
-      const filteredSuggestions = allSuggestions.filter(item =>
-        item.text.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setDisplayList(filteredSuggestions);
-    } else {
-      // Jika input kosong, reset semuanya
-      setMusicResults([]);
-      setDisplayList(searchHistory); // Tampilkan riwayat
-    }
-  }, [searchQuery, searchHistory]);
+    const timeout = setTimeout(async () => {
+      if (!searchQuery) {
+        setMusicResults([]);
+        return;
+      }
+      try {
+        const results = await searchMusicJamendo(searchQuery, 15);
+        setMusicResults(results);
+      } catch (e) {
+        console.log("ERR SEARCH JAMENDO:", e);
+      }
+    }, 400);
+    return () => clearTimeout(timeout);
+  }, [searchQuery]);
 
   const handleSearchSubmit = (text: string) => {
-    if (!text) return;
+    if (!text.trim()) return;
     setSearchQuery(text);
+    addHistory(text); 
     Keyboard.dismiss();
-
-    if (!searchHistory.some(h => h.text === text)) {
-      const newHistoryItem: SearchListItem = { id: `h${Date.now()}`, text, type: 'history' };
-      setSearchHistory(prev => [newHistoryItem, ...prev].slice(0, 5));
-    }
   };
 
   const clearSearch = () => {
@@ -123,60 +89,105 @@ const DiscoverPage = () => {
   };
 
   // --- RENDER FUNCTIONS ---
-
   const renderMusicCard = ({ item }: { item: MusicReference }) => (
-    <View style={styles.musicCard}>
+    <TouchableOpacity
+      key={item.id}
+      style={styles.musicCard}
+      activeOpacity={0.8}
+      onPress={() => navigateToNowPlaying(item)}
+    >
       <Image source={item.image} style={styles.musicImage} />
       <View style={styles.musicTextContainer}>
         <Text style={styles.musicTitle}>{item.title}</Text>
         <Text style={styles.musicArtist}>{item.artist}</Text>
       </View>
-      <TouchableOpacity>
-        <Feather name="more-horizontal" size={20} color="#555" />
-      </TouchableOpacity>
-    </View>
+      <Feather name="more-horizontal" size={20} color="#555" />
+    </TouchableOpacity>
   );
 
-  const renderSearchItem = ({ item }: { item: SearchListItem }) => (
-    <TouchableOpacity style={styles.searchItem} onPress={() => handleSearchSubmit(item.text)}>
-      <Feather name={item.type === 'history' ? 'clock' : 'search'} size={22} color="#555" style={styles.leftIcon} />
-      <Text style={styles.itemText}>{item.text}</Text>
-      <Feather name="arrow-up-right" size={22} color="#555" />
+  // Render item history atau suggestion
+  const renderSearchItem = (text: string, type: 'history' | 'suggestion') => (
+    <TouchableOpacity
+      key={text}
+      style={styles.searchItem}
+      onPress={() => handleSearchSubmit(text)}
+    >
+      <Feather
+        name={type === 'history' ? 'clock' : 'search'}
+        size={22}
+        color="#555"
+        style={styles.leftIcon}
+      />
+      <Text style={[styles.itemText, { flex: 1 }]}>{text}</Text>
+      {type === 'history' ? (
+        // Tombol hapus per item history
+        <TouchableOpacity
+          onPress={() => removeHistory(text)}
+          hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
+        >
+          <Feather name="x" size={18} color="#aaa" />
+        </TouchableOpacity>
+      ) : (
+        <Feather name="arrow-up-right" size={22} color="#555" />
+      )}
     </TouchableOpacity>
   );
 
   const renderContent = () => {
-    // Jika tidak ada query, tampilkan "Play What You Like"
+    // Saat tidak ada query — tampilkan history
     if (!searchQuery) {
+      if (history.length === 0) {
+        return (
+          <View style={styles.playWhatYouLikeContainer}>
+            <Text style={styles.playWhatYouLikeTitle}>Play What You Like</Text>
+            <Text style={styles.playWhatYouLikeSubtitle}>
+              Search for songs, artists, playlists...
+            </Text>
+          </View>
+        );
+      }
       return (
-        <View style={styles.playWhatYouLikeContainer}>
-          <Text style={styles.playWhatYouLikeTitle}>Play What You Like</Text>
-          <Text style={styles.playWhatYouLikeSubtitle}>Search for songs, artists, playlists...</Text>
+        <View>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionHeader}>Riwayat Pencarian</Text>
+            <TouchableOpacity onPress={clearHistory}>
+              <Text style={styles.clearAllText}>Hapus Semua</Text>
+            </TouchableOpacity>
+          </View>
+          {history.map(h => renderSearchItem(h, 'history'))}
         </View>
       );
     }
 
-    // Jika ada query, tampilkan hasil
+    // Saat ada query — tampilkan suggestions + hasil musik
     return (
       <FlatList
         data={musicResults}
         renderItem={renderMusicCard}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}
-      ListHeaderComponent={
-  <>
-    {/* .map() sekarang mengembalikan elemen dengan key */}
-    {displayList.map(item => (
-      // renderSearchItem dipanggil di dalam elemen dengan key unik
-      <View key={item.id}> 
-        {renderSearchItem({ item })}
-      </View>
-    ))}
-    {musicResults.length > 0 && <Text style={styles.sectionHeader}>Songs</Text>}
-  </>
-}
+        ListHeaderComponent={
+          <>
+            {/* Suggestions dari history yang cocok */}
+            {suggestions.length > 0 && (
+              <View>
+                <Text style={[styles.sectionHeader, { paddingHorizontal: 16 }]}>
+                  Saran
+                </Text>
+                {suggestions.map(s => renderSearchItem(s, 'suggestion'))}
+              </View>
+            )}
+            {musicResults.length > 0 && (
+              <Text style={styles.sectionHeader}>Lagu</Text>
+            )}
+          </>
+        }
         ListEmptyComponent={
-            <Text style={styles.noResultsText}>No results found for "{searchQuery}"</Text>
+          suggestions.length === 0 ? (
+            <Text style={styles.noResultsText}>
+              No results found for "{searchQuery}"
+            </Text>
+          ) : null
         }
       />
     );
@@ -185,8 +196,8 @@ const DiscoverPage = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.searchContainer}>
-       <TouchableOpacity onPress={handleSearchPress}>
-         <AntDesign name="left" size={24} color="black" />
+        <TouchableOpacity onPress={handleSearchPress}>
+          <AntDesign name="left" size={24} color="black" />
         </TouchableOpacity>
         <TextInput
           style={styles.searchInput}
@@ -206,12 +217,9 @@ const DiscoverPage = () => {
       </View>
 
       {renderContent()}
-
     </SafeAreaView>
   );
 };
-
-// --- STYLESHEET (Termasuk style yang hilang) ---
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -232,6 +240,18 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#000',
     marginLeft: 20,
+  },
+    sectionHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  clearAllText: {
+    color: "#2CA58D",
+    fontSize: 13,
   },
   clearIcon: {
     padding: 5,
@@ -287,7 +307,6 @@ const styles = StyleSheet.create({
     color: '#666',
     marginTop: 2,
   },
-  // Style untuk "Play What You Like" yang ditambahkan kembali
   playWhatYouLikeContainer: {
     flex: 1,
     justifyContent: 'center',

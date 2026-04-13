@@ -1,105 +1,251 @@
 import { Text, View, Image, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { VideoView, useVideoPlayer } from 'expo-video'; // Pastikan expo-video sudah diinstal dan dikonfigurasi
+import { VideoView, useVideoPlayer } from 'expo-video'; 
 import React, { useEffect, useState } from "react";
-import { Feather, FontAwesome6 } from "@expo/vector-icons";
-import video1 from '../../../assets/videos/Video1.mp4';
-import Layout from "../../../components/hederLayout"; // Sesuaikan path jika berbeda
+import { Feather, MaterialIcons } from "@expo/vector-icons";
+import Layout from "../../../components/layout/hederLayout"; 
 import { LinearGradient } from "expo-linear-gradient";
 import MaskedView from "@react-native-masked-view/masked-view";
-import MiniNavbar from "../../../components/MiniNavbar";
-import { router } from "expo-router";
+import MiniNavbar from "../../../components/layout/MiniNavbar";
+import { router, useRouter } from "expo-router";
+import {  getArtistsWithImage, getMusicList } from "@/services/music.api";
+import { searchPexelsVideos } from "@/services/pexels.api";
+import ShimmerVideoCard from "@/components/loading/ShimmerVideoCard";
+import { ShimmerHorizontalCard } from "@/components/loading/ShimmerHorizontalCard";
+import { navigateToNowPlaying } from "@/utils/navigation";
+import { usePlayer } from "@/context/PlayerContext";
+import { Artist } from "@/components/common/LastPlayedList";
+import UniversalAlert, { UniversalAlertProps } from "@/components/common/UniversalAlert";
 
+
+export interface Track {
+  id: string;
+  name: string;
+  artist_name: string;
+  audio: string;
+  image: string;
+  album_image?: string;
+  duration?: number;
+  genre?: string[];
+}
 
 type VideoCardProps = {
-  source: any;
-  title: string;
-  meta: string;
-  genre?: string;
+  track: Track; 
+  pexelsVideo?: any; 
   customStyle?: any;
+  onPress: () => void;
 };
-  const handlePress = () => {
-    router.push("/NowPlayingScreen"); // arahkan ke halaman NowPlayingScreen.tsx
-  };
-  const handlePresss = () => {
-    router.push("/MusicDetailScreen"); 
-  };
-const VideoCard: React.FC<VideoCardProps> = ({ source, title, meta, genre, customStyle }) => {
-  const player = useVideoPlayer(source);
 
-  useEffect(() => {
-    if (player) {
-      player.loop = true;
-      player.muted = true;
-      player.play();
+const VideoCard = React.memo(({
+  track,
+  pexelsVideo,
+  customStyle,
+  onPress,
+}: VideoCardProps) => {
+
+  // 1. Logika Pilih Video Pexels (Tetap sama)
+  const videoSource = React.useMemo(() => {
+    if (pexelsVideo?.video_files?.length) {
+      return pexelsVideo.video_files
+        .filter((v: any) =>
+          v.file_type === "video/mp4" && v.width <= 1280
+        )
+        .sort((a: any, b: any) => b.width - a.width)[0]?.link;
     }
-  }, [player]);
-const [shareVisible, setShareVisible] = useState(false);
+    return null;
+  }, [pexelsVideo]);
+
+  // 2. Setup Player
+  const player = useVideoPlayer(videoSource, (player) => {
+    player.loop = true;
+    player.muted = true;
+    player.play();
+  });
+
+  if (!videoSource) return null;
+
   return (
-    
-    <View>
+    <TouchableOpacity activeOpacity={0.9} onPress={onPress}>
+      {/* --- VIDEO SECTION --- */}
       <View style={[styles.videoCard, customStyle]}>
         <View style={styles.videoContainer}>
-        <VideoView
-          player={player}
-          style={styles.video}
-          nativeControls={false}
-          fullscreenOptions={{ enable: true }}
-          contentFit="cover"
-        />
+          <VideoView
+            key={videoSource}
+            player={player}
+            style={styles.video}
+            nativeControls={false}
+            contentFit="cover"
+          />
         </View>
+
         <View style={styles.overlay}>
           <View style={styles.topOverlay}>
-            <Text style={styles.videoTitle} numberOfLines={1}>{title}</Text>
-            <TouchableOpacity style={styles.playButton}>
-              <FontAwesome6 name="play" size={20} color="white" />
-            </TouchableOpacity>
+            {/* Song Title from API */}
+            <Text style={styles.videoTitle} numberOfLines={1}>
+              {track.name}
+            </Text>      
           </View>
+
           <View style={styles.bottomOverlay}>
-            <MaterialIcons name="multitrack-audio" size={26} color="#fff" />
-            <Text style={styles.videoMeta}>{meta}</Text>
+             <MaterialIcons name="multitrack-audio" size={26} color="#fff" />
+            <Text style={styles.videoMeta}>Trending Now</Text>
           </View>
-          {genre && <Text style={styles.genreTag}>{genre}</Text>}
+
+          {/* Genre of API */}
+          {track.genre && track.genre.length > 0 && (
+            <Text style={styles.genreTag}>{track.genre[0]}</Text>
+          )}
         </View>
       </View>
+
+      {/* --- EXTRA CARD SECTION --- */}
       <View style={styles.extraCard}>
         <View style={styles.textIconContainer}>
-     <View style={{ flexDirection: "row" }}>
-        <MaskedView
-          maskElement={
-            <Text style={[styles.extraTitle, { backgroundColor: "transparent" }]}>
-              Top Hits by Diljit
-            </Text>
-          }
-        >
-      <LinearGradient
-        colors={["#0B3129", "#219780"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-      >
-        <Text style={[styles.extraTitle, { opacity: 0 }]}>
-          Top Hits by Diljit
-        </Text>
-      </LinearGradient>
-      </MaskedView>
-      </View>
+          <View style={{ flexDirection: "row", flex: 1 }}>
+            <MaskedView
+              maskElement={
+                <Text style={[styles.extraTitle, { backgroundColor: "transparent" }]} numberOfLines={1}>
+                  {track.artist_name}
+                </Text>
+              }
+            >
+              <LinearGradient
+                colors={["#0B3129", "#219780"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                <Text style={[styles.extraTitle, { opacity: 0 }]} numberOfLines={1}>
+                  {track.artist_name}
+                </Text>
+              </LinearGradient>
+            </MaskedView>
+          </View>
 
           <View style={styles.iconContainer}>
             <TouchableOpacity>
               <Feather name="heart" size={20} color="#1C274C" />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.shareIcon} >
-              <Feather name="share" size={20} color="#" />
+            <TouchableOpacity style={styles.shareIcon}>
+              <Feather name="share" size={20} />
             </TouchableOpacity>
           </View>
         </View>
-        <Text style={styles.extraDescription} numberOfLines={1} ellipsizeMode="tail">10 tracks · 3:45 mins each · Pop</Text>
+
+        {/* Description below */}
+        <Text
+          style={styles.extraDescription}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
+          Single • {track.duration ? Math.floor(track.duration / 60) + " mins" : "Unknown duration"}
+        </Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
-};
+
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.track.id === nextProps.track.id && 
+    prevProps.pexelsVideo === nextProps.pexelsVideo
+  );
+});
 
 export default function ExploreScreen() {
+  const [artists, setArtists] = useState<Artist[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [pexelsVideos, setPexelsVideos] = useState<any[]>([]);
+
+  const { setTrack } = usePlayer();  
+  const [tracks, setTracks] = useState<Track[]>([]);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertConfig, setAlertConfig] = useState<Partial<UniversalAlertProps>>({});
+
+const handlePlay = (item: any) => {
+  if (!item.audio || item.audio.trim() === "") {
+    setAlertConfig({
+      type: 'reminder',
+      title: 'Audio Tidak Tersedia',
+      message: 'Audio tidak tersedia untuk lagu ini.',
+      confirmText: 'OK',
+    });
+    setAlertVisible(true);
+    return;
+  }
+  navigateToNowPlaying(router, item);
+};
+
+  const handlePress = (item: Track) => {
+  setTrack({
+    title: item.name,
+    artist: item.artist_name,
+    image: item.image,
+    audio: item.audio, 
+  });
+
+  router.push({
+    pathname: "/(drawer)/NowPlayingScreen",
+    params: {
+      id: item.id,
+      title: item.name,
+      artist: item.artist_name,
+      image: encodeURIComponent(item.image),
+      audio: encodeURIComponent(item.audio),
+    }
+  });
+};
+  useEffect(() => {
+  const loadVideos = async () => {
+   const videos = await searchPexelsVideos("city night", 5);
+    setPexelsVideos(videos);
+  };
+
+  loadVideos();
+}, []);
+
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+async function loadData() {
+    try {
+      if (tracks.length === 0) setLoading(true);
+      const [artistData, trackData] = await Promise.all([
+        getArtistsWithImage(5),
+        getMusicList(10),       
+      ]);
+
+      setArtists(artistData);
+      setTracks(trackData);
+    } catch (e) {
+      console.log("ERR LOAD DATA:", e);
+    } finally {
+      setLoading(false); 
+    }
+  }
+
+  
+
+ if (loading) {
+  return (
+    <View style={{ flex: 1, padding: 16 }}>
+      
+      {/* Shimmer Video */}
+      <ShimmerVideoCard />
+
+      {/* Shimmer Horizontal */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        {[...Array(5)].map((_, i) => (
+          <ShimmerHorizontalCard key={i} />
+        ))}
+      </ScrollView>
+
+      {/* Shimmer Video kedua */}
+      <ShimmerVideoCard />
+    </View>
+  );
+}
+
+
   return (
 <View style={{ flex: 1 }}>
     <ScrollView style={styles.main} showsVerticalScrollIndicator={false}>
@@ -111,32 +257,46 @@ export default function ExploreScreen() {
           <Text style={styles.sectionTitlePart11}>What's your</Text>
           <Text style={styles.sectionTitlePart2}>Mood today?</Text>
         </View>
-</View>
-
-
-  {/* Recently Played */}
-  <View style={styles.historyPlayContainer}>
-<View style={{ width: "100%" }}>
-  <Text style={[styles.historyPlayText1, { textAlign: "left", alignSelf: "flex-start" }]}>
-   Refrens for you
-  </Text>
-</View>
-  </View>
-  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollView}>
-    <View style={styles.cardHistory}>
-        <TouchableOpacity onPress={handlePress}>
+          </View>
+        <UniversalAlert
+              {...(alertConfig as UniversalAlertProps)}
+              visible={alertVisible}
+              onConfirm={() => setAlertVisible(false)}
+              onCancel={() => setAlertVisible(false)}
+            />
+          {/* Recently Played */}
+            <View style={styles.historyPlayContainer}>
+          <View style={{ width: "100%" }}>
+            <Text style={[styles.historyPlayText1, { textAlign: "left", alignSelf: "flex-start" }]}>
+            Refrens for you
+            </Text>
+          </View>
+            </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.scrollView}
+          >
+        <View style={styles.newContentWrapper}>
+          {tracks.map((item, index) => (
+            <TouchableOpacity
+              key={item.id}
+              style={styles.newCardContainer}
+              onPress={() => handlePress(item)}
+              activeOpacity={0.8}
+            >
         <Image
-          style={styles.card}
-          source={require("../../../assets/images/download.jpg")}
+          style={styles.newCard}
+          source={{ uri: item.image }}
         />
-      </TouchableOpacity>
-              <TouchableOpacity onPress={handlePresss}>
-      <Image style={styles.card} source={require('../../../assets/images/gambar1.png')} />
-      </TouchableOpacity>
-      <Image style={styles.card} source={require('../../../assets/images/gambar 2.png')} />
-      <Image style={styles.card} source={require('../../../assets/images/gambar 3.png')} />
-    </View>
-  </ScrollView>
+      <Text style={styles.newCardTitle} numberOfLines={1}>
+        {item.artist_name} - {item.name}
+      </Text>
+    </TouchableOpacity>
+  ))}
+</View>
+
+</ScrollView>
 <View style={styles.content2}>
   {/* Trending Section */}
   <View style={styles.trendingSectionTitle}>
@@ -147,163 +307,166 @@ export default function ExploreScreen() {
   </View>
 
   {/* Video Card */}
+ {tracks.length > 0 && pexelsVideos.length > 0 && (
   <VideoCard
-    source={video1}
-    title="Diljit Dosanjh • EP"
-    meta="2023 • 13 songs"
-    customStyle={{
-      width: 335,
-      height: 265,
-      alignSelf: 'center',
-      marginTop: 15,
-    }}
+    track={tracks[0]} 
+    pexelsVideo={pexelsVideos[0]}
+    onPress={() => handlePress(tracks[0])} 
   />
+)}
     </View>
-       <View style={styles.newSection}>
+     <View style={styles.newSection}>
      <View style={{ alignItems: "flex-start" }}>
   <Text style={styles.historyPlayText}>Recently played</Text>
 </View>
 
-        <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.scrollView}>
-      <View style={styles.newContentWrapper}>
-      <View style={styles.newCardContainer}>
-    <Image 
-      style={styles.newCard} 
-      source={require('../../../assets/images/gamabrpic.png')} 
-    />
-    <Text style={styles.newCardTitle}>
-      Ed Sheeran Big seen, Juice WRD, Post Malone
-    </Text>
-  </View>
-      <View style={styles.newCardContainer}>
-    <Image 
-      style={styles.newCard} 
-      source={require('../../../assets/images/gamabrpic1.png')} 
-    />
-    <Text style={styles.newCardTitle}>
-     Mitski, Tame Impala, Glass Animals, Charli XCX
-    </Text>
-  </View>
-      <View style={styles.newCardContainer}>
-    <Image 
-      style={styles.newCard} 
-      source={require('../../../assets/images/gamabrpic2.png')} 
-    />
-    <Text style={styles.newCardTitle}>
-      Ed Sheeran Big seen, Juice WRD, Post Malone
-    </Text>
-  </View>
-      </View>
-      </ScrollView>
-
- {/* untuk penggemar */}
-
-    </View>
-   <View style={styles.container}>
-  {/* Card artis */}
-   <TouchableOpacity style={styles.card1} onPress={() => router.push("/ArtistProfile")}>
+  <ScrollView 
+  horizontal={true} 
+  showsHorizontalScrollIndicator={false} 
+  style={styles.scrollView}
+>
+<View style={styles.newContentWrapper}>
+  {tracks.map((item) => (
+    <TouchableOpacity
+      key={item.id}
+      style={styles.newCardContainer}
+      activeOpacity={0.8}
+      onPress={() => handlePlay(item)}
+    >
+      <Image
+        style={styles.newCard}
+        source={{
+          uri:
+            item.image && item.image.trim() !== ""
+              ? item.image
+              : "https://via.placeholder.com/300",
+        }}
+      />
+      <Text style={styles.newCardTitle} numberOfLines={1}>
+        {item.artist_name} - {item.name}
+      </Text>
+    </TouchableOpacity>
+  ))}
+</View>
+</ScrollView>
+</View>
+<View style={styles.container}>
+ {artists.length > 0 && (
+  <TouchableOpacity
+    style={styles.card1}
+    onPress={() =>
+      router.push({
+        pathname: "/ArtistProfile",
+        params: { artistId: artists[0].id }
+      })
+    }
+  >
     <Image
-      source={require("../../../assets/images/Justin Bieber.jpg")}
       style={styles.image}
+      source={{
+        uri: artists[0].image || "https://via.placeholder.com/300",
+      }}
     />
-    <View style={{ alignItems: "center", marginLeft: 10 }}>
+
+    <View style={{ marginLeft: 10 }}>
+       <Text style={styles.name}>{artists[0].name}</Text>
       <Text style={styles.fanText}>Untuk Penggemar</Text>
-      <Text style={styles.name}>Hans Zimmer</Text>
     </View>
   </TouchableOpacity>
+)}
 
-  {/* ScrollView konten baru */}
+<ScrollView
+  horizontal
+  showsHorizontalScrollIndicator={false}
+  style={{ marginTop: 10 }}
+>
+    <View style={styles.newContentWrapper}>
+      {tracks.map((track: any) => (
+        <View style={styles.newCardContainer} key={track.id}>
+          <TouchableOpacity
+            key={track.id}
+            style={styles.newCardContainer}
+            activeOpacity={0.8}
+           onPress={() => handlePlay(track)}
+          >
+            <Image
+              style={styles.newCard}
+              source={{
+                uri:
+                  track.image && track.image.trim() !== ""
+                    ? track.image
+                    : "https://via.placeholder.com/300",
+              }}
+            />
+            <Text style={styles.newCardTitle} numberOfLines={1}>
+              {track.name}
+            </Text>
+          </TouchableOpacity>
+          {/*song name*/}
+        </View>
+      ))}
+    </View>
+  </ScrollView>
+</View>
+
+
+   <View style={styles.container}>
+  {/* Card artis */}
+  {artists.length > 0 && (
+    <TouchableOpacity
+      style={styles.card1}
+      onPress={() =>
+        router.push({
+          pathname: "/ArtistProfile",
+          params: { artistId: artists[0].id },
+        })
+      }
+    >
+       <Image
+      style={styles.image}
+      source={{
+        uri: artists[0].image || "https://via.placeholder.com/300",
+      }}
+    />
+      <View style={{ marginLeft: 10 }}>
+         <Text style={styles.name}>{artists[1].name}</Text>
+        <Text style={styles.fanText}>Untuk Penggemar</Text>
+      </View>
+    </TouchableOpacity>
+  )}
+   {/*ScrollView new content*/}
   <ScrollView
     horizontal
     showsHorizontalScrollIndicator={false}
     style={styles.scrollView}
   >
     <View style={styles.newContentWrapper}>
-      <View style={styles.newCardContainer}>
-        <Image
-          style={styles.newCard}
-          source={require("../../../assets/images/gamabrpic.png")}
-        />
-        <Text style={styles.newCardTitle}>
-          Ed Sheeran Big seen, Juice WRD, Post Malone
-        </Text>
-      </View>
-
-      <View style={styles.newCardContainer}>
-        <Image
-          style={styles.newCard}
-          source={require("../../../assets/images/gamabrpic1.png")}
-        />
-        <Text style={styles.newCardTitle}>
-          Mitski, Tame Impala, Glass Animals, Charli XCX
-        </Text>
-      </View>
-
-      <View style={styles.newCardContainer}>
-        <Image
-          style={styles.newCard}
-          source={require("../../../assets/images/gamabrpic2.png")}
-        />
-        <Text style={styles.newCardTitle}>
-          Ed Sheeran Big seen, Juice WRD, Post Malone
-        </Text>
-      </View>
+      {tracks.map((track) => (
+        <View style={styles.newCardContainer} key={track.id}>
+          <TouchableOpacity
+            key={track.id}
+            style={styles.newCardContainer}
+            activeOpacity={0.8}
+            onPress={() => handlePlay(track)}
+          >
+            <Image
+              style={styles.newCard}
+              source={{
+                uri:
+                  track.image && track.image !== ""
+                    ? track.image
+                    : "https://via.placeholder.com/300",
+              }}
+            />
+            <Text style={styles.newCardTitle} numberOfLines={2}>
+              {track.artist_name}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      ))}
     </View>
-  </ScrollView>
-</View>
-   <View style={styles.container}>
-  {/* Card artis */}
-  <TouchableOpacity style={styles.card1} onPress={() => router.push("/ArtistProfile")}>
-    <Image
-      source={require("../../../assets/images/Afgan.webp")}
-      style={styles.image}
-    />
-    <View style={{ alignItems: "center", marginLeft: 10 }}>
-      <Text style={styles.fanText}>Untuk Penggemar</Text>
-      <Text style={styles.name}>Hans Zimmer</Text>
-    </View>
-  </TouchableOpacity>
-
-  {/* ScrollView konten baru */}
-  <ScrollView
-    horizontal
-    showsHorizontalScrollIndicator={false}
-    style={styles.scrollView}
-  >
-    <View style={styles.newContentWrapper}>
-      <View style={styles.newCardContainer}>
-        <Image
-          style={styles.newCard}
-          source={require("../../../assets/images/gamabrpic.png")}
-        />
-        <Text style={styles.newCardTitle}>
-          Ed Sheeran Big seen, Juice WRD, Post Malone
-        </Text>
+     </ScrollView>
       </View>
-
-      <View style={styles.newCardContainer}>
-        <Image
-          style={styles.newCard}
-          source={require("../../../assets/images/gamabrpic1.png")}
-        />
-        <Text style={styles.newCardTitle}>
-          Mitski, Tame Impala, Glass Animals, Charli XCX
-        </Text>
-      </View>
-
-      <View style={styles.newCardContainer}>
-        <Image
-          style={styles.newCard}
-          source={require("../../../assets/images/gamabrpic2.png")}
-        />
-        <Text style={styles.newCardTitle}>
-          Ed Sheeran Big seen, Juice WRD, Post Malone
-        </Text>
-      </View>
-    </View>
-    
-  </ScrollView>
-</View>
     </ScrollView>
       {/* <MiniPlayer /> */}
      <MiniNavbar />
@@ -316,7 +479,6 @@ const styles = StyleSheet.create({
   main: {
     flex: 1,
     backgroundColor: '#F5F5F5',
-     paddingTop: 40,
   },
   content: {
     flex: 1,
@@ -328,11 +490,11 @@ content1: {
   alignItems: 'center',
   paddingTop: 10,
 },
+
 content2: {
   flex: 1,
  marginTop: 9,
   alignItems: 'center',
-
 },
 vibeSectionTitle: {
   flexDirection: 'column', 
@@ -341,6 +503,11 @@ vibeSectionTitle: {
   width: '88%',
   marginBottom: 10,
 },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
 trendingSectionTitle: {
   flexDirection: 'row',
   alignItems: 'center',
@@ -385,7 +552,12 @@ seeAllText: {
     borderTopRightRadius: 15,
     overflow: 'hidden',
   },
-  video: { width: '100%', height: '100%' },
+ video: {
+  width: '100%',
+  aspectRatio: 16 / 9,
+  borderRadius: 16,
+},
+
   overlay: {
     position: 'absolute',
     top: 0,
@@ -475,7 +647,7 @@ seeAllText: {
 extraTitle: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#000", // fallback
+    color: "#000", 
   },
   extraDescription: {
     fontSize: 13,
@@ -488,88 +660,83 @@ extraTitle: {
   shareIcon: {
     marginLeft: 10,
   },
-historyPlayContainer: {
-  marginTop: 19,
-  marginBottom: 5,
-  paddingHorizontal: 20,
-},
-historyPlayText: {
-  fontSize: 23,
-  color: '#000',
-  fontWeight: 'bold',
-  marginBottom:8,
-},
-historyPlayText1: {
-  fontSize: 25,
-  fontWeight: "bold",
-  color: "#000",
-  marginBottom: 10,
-  textAlign: "left",   // ini penting
-  alignSelf: "flex-start", // jaga-jaga kalau parent flex row
-},
+  historyPlayContainer: {
+    marginTop: 19,
+    marginBottom: 5,
+    paddingHorizontal: 20,
+  },
+  historyPlayText: {
+    fontSize: 23,
+    color: '#000',
+    fontWeight: 'bold',
+    marginBottom:8,
+  },
+  historyPlayText1: {
+    fontSize: 25,
+    fontWeight: "bold",
+    color: "#000",
+    marginBottom: 10,
+    textAlign: "left",   
+    alignSelf: "flex-start", 
+  },
 
-cardHistory: {
-  marginTop: 6,
-  flexDirection: 'row',
-  paddingHorizontal: 30
-},
-card: {
-  width: 108,
-  height: 108,
-  borderRadius: 10,
-  backgroundColor: '#333',
-  marginRight: 12, // kasih jarak antar card
-},
+  cardHistory: {
+    marginTop: 6,
+    flexDirection: 'row',
+    paddingHorizontal: 30
+  },
+  card: {
+    width: 108,
+    height: 108,
+    borderRadius: 10,
+    backgroundColor: '#333',
+    marginRight: 12, 
+  },
 scrollView:{
 
 },
 
-//untuk editor pic
-newSection: {
-  marginTop: 20,
-  paddingHorizontal: 20,
-},
-newSectionTitle: {
-  fontSize: 24,
-  fontWeight: 'bold',
-  color: '#000',
-  marginBottom: 10,
-  marginRight: 2,
-  textAlign: 'left',   // pastikan teks rata kiri
-  alignSelf: 'flex-start', // biar ga ikut center parent
-},
+  newSection: {
+    marginTop: 20,
+    paddingHorizontal: 20,
+  },
+  newSectionTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#000',
+    marginBottom: 10,
+    marginRight: 2,
+    textAlign: 'left',   
+    alignSelf: 'flex-start', 
+  },
 
-newContentWrapper: {
-  flexDirection: 'row',
-  flexWrap: 'wrap', // biar bisa ke bawah kalau banyak
-  gap: 12,
-  alignItems:'flex-start',
-  marginRight:12,
-},
-newCard: {
-  width: 150,
-  height: 150,
-  borderRadius: 12,
-  backgroundColor: '#ccc',
-  marginBottom: 6,
-},
+  newContentWrapper: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems:'flex-start',
+    marginRight:12,
+  },
+  newCard: {
+    width: 150,
+    height: 150,
+    borderRadius: 12,
+    backgroundColor: '#ccc',
+    marginBottom: 6,
+  },
 
-newCardTitle: {
-  fontSize: 11.5,
-  color: '#000',
-  textAlign: 'center',   
-  flexWrap: 'nowrap',    
-  width: 150,     
-   marginBottom: 3,      
-},
+  newCardTitle: {
+    fontSize: 11.5,
+    color: '#000',
+    textAlign: 'center',   
+    flexWrap: 'nowrap',    
+    width: 150,     
+    marginBottom: 3,      
+  },
 
-newCardContainer: {
-  alignItems: 'center', 
-  width: 150,
-},
-
-//code untuk untuk pengggemar 
-
+  newCardContainer: {
+    alignItems: 'center', 
+    width: 150,
+  },
   container: {
     flexDirection: "column",   
     marginTop: 20,
@@ -578,7 +745,7 @@ newCardContainer: {
   card1: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 15,          // jarak ke ScrollView
+    marginBottom: 15,         
   },
   image: {
     width: 95,

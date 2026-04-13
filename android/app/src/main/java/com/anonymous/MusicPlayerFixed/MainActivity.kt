@@ -1,4 +1,4 @@
-package com.anonymous.MusicPlayerFixed
+package com.anonymous.musicplayerfixed
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

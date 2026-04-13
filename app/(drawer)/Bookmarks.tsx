@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -7,144 +7,65 @@ import {
   Image,
   FlatList,
   Modal,
+  ActivityIndicator,
 } from "react-native";
 import {
   Feather,
   MaterialCommunityIcons,
   MaterialIcons,
 } from "@expo/vector-icons";
-import MenuButton from "@/components/MenuButton";
+import MenuButton from "@/components/common/MenuButton";
 import { LinearGradient } from "expo-linear-gradient";
-import NodataBookmar from "@/components/NodataBookmar";
-import SortMenu from "@/components/SortMenu";
+import NodataBookmar from "@/components/common/NodataBookmar";
+import SortMenu from "@/components/layout/SortMenu";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "@/hooks/useAuth";
+import { getBookmarksApi, toggleBookmarkApi } from "@/services/auth.api";
+import UniversalAlert, { UniversalAlertProps } from "@/components/common/UniversalAlert";
 
-// --- Types ---
+
 export interface Song {
   id: string;
   title: string;
   artist: string;
-  album: string;
-  duration: string;
   thumbnailUrl: string;
-  category: string;
   year: string;
-  description: string;
-};
+}
 
 export interface PodcastEpisode {
   id: string;
   title: string;
-  showName: string;
   publisher: string;
-  duration: string;
   thumbnailUrl: string;
-  description: string;
-  category: string;
   year: string;
-};
-type Props = {
-  dummySongs: Song[];
-  dummyPodcasts: PodcastEpisode [];
-};
+}
 
-// --- Dummy Data ---
-const dummySongs: Song[] = [
-  {
-    id: "1",
-    title: "Backburner",
-    artist: "NIKI",
-    album: "NIKI Album",
-    duration: "3:57",
-    thumbnailUrl: "https://picsum.photos/seed/song1/200",
-    category: "Pop",
-    year: "2022",
-    description: "Song by NIKI",
-  },
-  {
-    id: "2",
-    title: "Dessert",
-    artist: "Dawin",
-    album: "Single",
-    duration: "3:31",
-    thumbnailUrl: "https://picsum.photos/seed/song2/200",
-    category: "Pop",
-    year: "2015",
-    description: "Song by Dawin",
-  },
-];
-
-const dummyPodcasts: PodcastEpisode[] = [
-  {
-    id: "1",
-    title: "The Future of AI with Sam Altman",
-    showName: "Tech Forward",
-    publisher: "The Verge",
-    duration: "45 min",
-    thumbnailUrl: "https://picsum.photos/seed/podcast1/200",
-    description: "Exploring how AI is shaping our future.",
-    category: "Technology",
-    year: "2023",
-  },
-  {
-    id: '2',
-    title: 'A Deep Dive into Stoicism',
-    showName: 'The Daily Stoic',
-    publisher: 'Ryan Holiday',
-    duration: '28 min',
-    thumbnailUrl: 'https://picsum.photos/seed/podcast2/200',
-   description: 'Exploring how AI is shaping our future with insights from OpenAI CEO Sam Altman.',
-    category: 'health',
-    year: '2024',
-  },
-  {
-    id: '3',
-    title: 'How to Build Good Habits',
-    showName: 'The Knowledge Project',
-    publisher: 'Farnam Street',
-    duration: '1 hr 12 min',
-    thumbnailUrl: 'https://picsum.photos/seed/podcast3/200',
-  description: 'Exploring how AI is shaping our future with insights from OpenAI CEO Sam Altman.',
-  category: 'lifestyle',
-  year: '2023',
-  },
-];
-
-// --- Card Song ---
 const SongCard: React.FC<{
-  item: Song;
-  onMorePress: (item: Song, ref: React.RefObject<View | null>) => void;
+  item: any;
+  onMorePress: (item: any, ref: React.RefObject<View | null>) => void;
 }> = ({ item, onMorePress }) => {
   const moreButtonRef = useRef<View | null>(null);
+  if (!item) return null;
 
   return (
-    <LinearGradient
-      colors={["#0B3129", "#219780"]}
-      start={{ x: 0.3, y: 0.3 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.recommendedCard}
-    >
-      <Image
-        source={{ uri: item.thumbnailUrl }}
-        style={styles.recommendedThumbnail}
+    <LinearGradient colors={["#0B3129", "#219780"]} style={styles.recommendedCard}>
+      <Image 
+        source={{ uri: item.image || item.thumbnailUrl || "https://via.placeholder.com/150" }} 
+        style={styles.recommendedThumbnail} 
       />
-
       <View style={styles.recommendedInfo}>
-        <Text style={styles.recommendedTitle}>{item.title}</Text>
-        <Text style={styles.recommendedMeta}>
-          {item.artist} • {item.year}
+        <Text style={[styles.recommendedTitle, { color: '#fff' }]}>
+           {item.title || "Untitled"}
+        </Text>
+        <Text style={[styles.recommendedMeta, { color: '#ddd' }]}>
+           {item.artist || "Unknown Artist"} • {item.year || "2024"}
         </Text>
       </View>
-
       <View style={styles.iconsContainer}>
         <TouchableOpacity style={styles.playButton}>
           <MaterialIcons name="play-circle-filled" size={30} color="#12F0C4" />
         </TouchableOpacity>
-
-        <TouchableOpacity
-          ref={moreButtonRef}
-          onPress={() => onMorePress(item, moreButtonRef)}
-        >
+        <TouchableOpacity ref={moreButtonRef} onPress={() => onMorePress(item, moreButtonRef)}>
           <MaterialIcons name="more-vert" size={24} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
@@ -152,42 +73,27 @@ const SongCard: React.FC<{
   );
 };
 
-
-// --- Card Podcast ---
+// --- 3. KOMPONEN PODCAST CARD ---
 const PodcastCard: React.FC<{
-  item: PodcastEpisode;
-  onMorePress: (item: PodcastEpisode, ref: React.RefObject<View | null>) => void;
+   item: any;
+  onMorePress: (item: any, ref: React.RefObject<View | null>) => void;
 }> = ({ item, onMorePress }) => {
   const moreButtonRef = useRef<View | null>(null);
-
   return (
-    <LinearGradient
-      colors={["#0B3129", "#219780"]}
-      start={{ x: 0.3, y: 0.3 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.recommendedCard}
-    >
-      <Image
-        source={{ uri: item.thumbnailUrl }}
-        style={styles.recommendedThumbnail}
+    <LinearGradient colors={["#0B3129", "#219780"]} style={styles.recommendedCard}>
+      <Image 
+        source={{ uri: item.image || "https://via.placeholder.com/150" }} 
+        style={styles.recommendedThumbnail} 
       />
-
       <View style={styles.recommendedInfo}>
         <Text style={styles.recommendedTitle}>{item.title}</Text>
-        <Text style={styles.recommendedMeta}>
-          {item.publisher} • {item.year}
-        </Text>
+         <Text style={styles.recommendedMeta}>{item.artist || "Unknown"} • {item.year || "2024"}</Text>
       </View>
-
       <View style={styles.iconsContainer}>
         <TouchableOpacity style={styles.playButton}>
           <MaterialIcons name="play-circle-filled" size={30} color="#12F0C4" />
         </TouchableOpacity>
-
-        <TouchableOpacity
-          ref={moreButtonRef}
-          onPress={() => onMorePress(item, moreButtonRef)}
-        >
+        <TouchableOpacity ref={moreButtonRef} onPress={() => onMorePress(item, moreButtonRef)}>
           <MaterialIcons name="more-vert" size={24} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
@@ -197,181 +103,184 @@ const PodcastCard: React.FC<{
 
 
 export default function Bookmarks() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<"music" | "podcast">("music");
+  const [loading, setLoading] = useState(true);
+
+  // State Data Database
   const [bookmarks, setBookmarks] = useState({
-    music: dummySongs,
-    podcast: dummyPodcasts,
+    music: [] as Song[],
+    podcast: [] as PodcastEpisode[],
   });
 
-  // State
+  // State Alert poup
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertConfig, setAlertConfig] = useState<Partial<UniversalAlertProps>>({});
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<Song | PodcastEpisode | null>(null);
-  const [popoverPos, setPopoverPos] = useState<{ x: number; y: number }>({
-    x: 0,
-    y: 0,
-  });
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [popoverPos, setPopoverPos] = useState({ x: 0, y: 0 });
 
-const handleMorePress = (
-  item: Song | PodcastEpisode,
-  ref: React.RefObject<View | null>
-) => {
-  setSelectedItem(item);
-  ref.current?.measure(
-    (_fx, _fy, _w, _h, px, py) => {
-      setPopoverPos({ x: px, y: py });
-      setModalVisible(true);
+  // 1. FETCH DATA DARI DATABASE SAAT HALAMAN DIBUKA
+  useEffect(() => {
+    if (user?.id) {
+      loadBookmarks();
     }
-  );
-};
+  }, [user]);
 
-const handleSortChange = (option: string) => {
-  if (activeTab === "music") {
-    let sorted = [...bookmarks.music];
+  const loadBookmarks = async () => {
+  try {
+    setLoading(true);
+    const rawData = await getBookmarksApi(user.id);
+    
+    const cleanedData = (rawData || []).map((doc: any) => {
+      if (doc.item) {
+        return {
+          ...doc.item,
+          type: doc.type,
+          dbId: doc.id 
+        };
+      }
+      return doc;
+    });
 
-    if (option === "Baru Diputar") {
-      sorted = sorted.sort((a, b) => b.year.localeCompare(a.year)); 
-    } else if (option === "Baru Disimpan") {
-      sorted = sorted.reverse(); // contoh aja, nanti bisa ganti sesuai field "savedAt"
-    } else if (option === "Nama (Z-A)") {
-      sorted = sorted.sort((a, b) => b.title.localeCompare(a.title));
-    }
-
-    setBookmarks((prev) => ({ ...prev, music: sorted }));
-  }
-
-  if (activeTab === "podcast") {
-    let sorted = [...bookmarks.podcast];
-
-    if (option === "Baru Diputar") {
-      sorted = sorted.sort((a, b) => b.year.localeCompare(a.year));
-    } else if (option === "Baru Disimpan") {
-      sorted = sorted.reverse();
-    } else if (option === "Nama (Z-A)") {
-      sorted = sorted.sort((a, b) => b.title.localeCompare(a.title));
-    }
-
-    setBookmarks((prev) => ({ ...prev, podcast: sorted }));
+    setBookmarks({
+      music: cleanedData.filter((i: any) => i.type === "music"),
+      podcast: cleanedData.filter((i: any) => i.type === "podcast"),
+    });
+  } catch (error) {
+    console.log("Error fetch bookmarks:", error);
+  } finally {
+    setLoading(false);
   }
 };
 
+  // 2. FUNGSI HAPUS BOOKMARK DARI DATABASE
+  const handleRemoveBookmark = async () => {
+    if (!selectedItem || !user?.id) return;
 
+    try {
+      setModalVisible(false);
 
-  const handleRemoveBookmark = () => {
-    if (selectedItem) {
+      await toggleBookmarkApi({
+        userId: user.id,
+        itemId: selectedItem.id,
+        title: selectedItem.title,
+        artist: selectedItem.artist || selectedItem.publisher || "Unknown",
+        image: selectedItem.image || selectedItem.thumbnailUrl,
+        type: activeTab
+      });
+
       setBookmarks((prev) => ({
         ...prev,
-        [activeTab]: prev[activeTab].filter(
-          (item) => item.id !== selectedItem.id
-        ),
+        [activeTab]: prev[activeTab].filter((item) => item.id !== selectedItem.id),
       }));
+
+    } catch (error) {
+      setAlertConfig({
+        type: 'error',
+        title: 'Gagal Menghapus!',
+        message: 'Gagal menghapus bookmark, silakan coba lagi.',
+        confirmText: 'Coba Lagi',
+      });
+      setAlertVisible(true);
+      loadBookmarks();
     }
-    setModalVisible(false);
   };
 
+  const NoBookmarkPlaceholder = () => (
+  <View style={styles.emptyCenterContainer}>
+    <Image 
+      source={require("@/assets/images/NoBookmark.png")} // Sesuai nama di asset Anda
+      style={styles.noBookmarkIcon} 
+    />
+    <Text style={styles.noBookmarkTitle}>No Bookmarks</Text>
+    <Text style={styles.noBookmarkSubtitle}>
+      Your bookmarks list is still empty. Start saving your favorite songs or albums here.
+    </Text>
+  </View>
+);
 
-  const data: (Song | PodcastEpisode)[] =
-    activeTab === "music" ? bookmarks.music : bookmarks.podcast;
+  const handleMorePress = (item: any, ref: React.RefObject<View | null>) => {
+    setSelectedItem(item);
+    ref.current?.measure((_fx, _fy, _w, _h, px, py) => {
+      setPopoverPos({ x: px, y: py });
+      setModalVisible(true);
+    });
+  };
+
+  const data = activeTab === "music" ? bookmarks.music : bookmarks.podcast;
 
   return (
-     <SafeAreaProvider>
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
-    <View style={styles.container}>
-      {/* Header */}
+    <SafeAreaProvider>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+      {/* 1. HEADER (Tetap di paling atas) */}
       <View style={styles.header}>
         <View style={styles.leftSection}>
           <MenuButton />
           <Text style={styles.title}>Bookmarks</Text>
         </View>
-        <TouchableOpacity>
-          <Feather name="search" size={24} color="#1d1e1f" />
-        </TouchableOpacity>
+        <TouchableOpacity><Feather name="search" size={24} color="#1d1e1f" /></TouchableOpacity>
       </View>
 
-      {/* Tab Switch */}
-     <View style={{ marginLeft: 8, marginVertical: 8 }}>
-  {/* Tab Button */}
-  <View style={styles.tabContainer}>
-    <TouchableOpacity
-      style={[styles.tabButton, activeTab === "music" && styles.activeTab]}
-      onPress={() => setActiveTab("music")}
-    >
-      <Text style={[styles.tabText, activeTab === "music" && { color: "#000" }]}>
-        Music
-      </Text>
-    </TouchableOpacity>
-    <TouchableOpacity
-      style={[styles.tabButton, activeTab === "podcast" && styles.activeTab]}
-      onPress={() => setActiveTab("podcast")}
-    >
-      <Text style={[styles.tabText, activeTab === "podcast" && { color: "#000" }]}>
-        Podcasts
-      </Text>
-    </TouchableOpacity>
-  </View>
-
-  {/* Urutan di bawah tab */}
-  <SortMenu onSortChange={handleSortChange} />
-</View>
-
-
-      {/* Empty State / List */}
-      {data.length === 0 ? (
-        <NodataBookmar songs={bookmarks.music} podcasts={bookmarks.podcast} />
-
-      ) : (
-        <FlatList<Song | PodcastEpisode>
-          data={data}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 80, paddingHorizontal: 13 }}
-          renderItem={({ item }) =>
-            activeTab === "music" ? (
-              <SongCard item={item as Song} onMorePress={handleMorePress} />
-            ) : (
-              <PodcastCard
-                item={item as PodcastEpisode}
-                onMorePress={handleMorePress}
-              />
-            )
+      {/* 2. TAB SWITCH & SORT (Hanya membungkus tab dan urutan) */}
+      <View style={{ marginLeft: 8, marginVertical: 8 }}>
+        <View style={styles.tabContainer}>
+          <TouchableOpacity style={[styles.tabButton, activeTab === "music" && styles.activeTab]} onPress={() => setActiveTab("music")}>
+            <Text style={[styles.tabText, activeTab === "music" && { color: "#f5f5f5" }]}>Music</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.tabButton, activeTab === "podcast" && styles.activeTab]} onPress={() => setActiveTab("podcast")}>
+            <Text style={[styles.tabText, activeTab === "podcast" && { color: "#f8f8f8" }]}>Podcasts</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={{ marginLeft: 15 }}>
+          <SortMenu onSortChange={() => {}} />
+        </View>
+      </View> 
+    
+      <View style={{ flex: 1 }}>
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#1F7A67" />
+          </View>
+        ) : (data && data.length > 0) ? (
+       <FlatList
+        data={data as any[]}
+         keyExtractor={(item) => item.id || Math.random().toString()} 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 13, paddingBottom: 80 }}
+        renderItem={({ item }) => {
+        
+          if (activeTab === "music") {
+            return <SongCard item={item} onMorePress={handleMorePress} />;
+          } else {
+            return <PodcastCard item={item} onMorePress={handleMorePress} />;
           }
-        />
-      )}
+        }}
+      />
+        ) : (
+          <NoBookmarkPlaceholder />
+        )}
+      </View>
 
-   {/* Modal More Options */}
-<Modal
-  transparent
-  animationType="fade"
-  visible={modalVisible}
-  onRequestClose={() => setModalVisible(false)}
->
-  <TouchableOpacity
-    style={styles.modalOverlay}
-    activeOpacity={1}
-    onPressOut={() => setModalVisible(false)}
-  >
-    <View
-      style={[
-        styles.modalPopover,
-        {
-          top: popoverPos.y,   // posisi Y sesuai tombol
-          left: popoverPos.x - 150, // geser ke kiri biar gak keluar layar
-        },
-      ]}
-    >
-      <TouchableOpacity
-        style={styles.modalOption}
-        onPress={handleRemoveBookmark}
-      >
-        <Text style={styles.modalText}>Remove bookmark</Text>
-        <Feather name="trash" size={20} color="black" />
-      </TouchableOpacity>
-    </View>
-  </TouchableOpacity>
-</Modal>
-
-    </View>
-      </SafeAreaView>
-    </SafeAreaProvider>
+      <UniversalAlert
+        {...(alertConfig as UniversalAlertProps)}
+        visible={alertVisible}
+        onConfirm={() => setAlertVisible(false)}
+        onCancel={() => setAlertVisible(false)}
+      />
+      {/* 4. MODAL POPOVER */}
+      <Modal transparent animationType="fade" visible={modalVisible}>
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPressOut={() => setModalVisible(false)}>
+          <View style={[styles.modalPopover, { top: popoverPos.y, left: popoverPos.x - 150 }]}>
+            <TouchableOpacity style={styles.modalOption} onPress={handleRemoveBookmark}>
+              <Text style={styles.modalText}>Remove bookmark</Text>
+              <Feather name="trash" size={20} color="black" />
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </SafeAreaView>
+  </SafeAreaProvider>
   );
 }
 
@@ -428,7 +337,7 @@ const styles = StyleSheet.create({
   },
   recommendedThumbnail: { width: 60, height: 60, borderRadius: 10 },
   recommendedInfo: { flex: 1, marginLeft: 10 },
-  recommendedTitle: { fontSize: 16, fontWeight: "600", color: "#fff" },
+  recommendedTitle: { fontSize: 16, fontWeight: 'bold', },
   recommendedMeta: { fontSize: 12, color: "#D0D0D0", marginTop: 2 },
   iconsContainer: { flexDirection: "row", alignItems: "center" },
   playButton: { marginRight: 10 },
@@ -436,7 +345,7 @@ const styles = StyleSheet.create({
   // Modal
 modalOverlay: {
   flex: 1,
-  backgroundColor: "transparent", // hilangkan overlay gelap
+  backgroundColor: "transparent", 
 },
 
 modalPopover: {
@@ -463,6 +372,36 @@ modalText: {
   color: "#000",
   marginRight: 10,
 },
-
+ emptyCenterContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+    marginTop: 0, 
+  },
+  noBookmarkIcon: {
+    width: 140,
+    height: 140,
+    resizeMode: 'contain',
+    marginBottom: 20,
+    opacity: 0.8,
+  },
+  noBookmarkTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#000',
+    marginBottom: 10,
+  },
+  noBookmarkSubtitle: {
+    fontSize: 14,
+    color: '#898A8D',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
 
 });
